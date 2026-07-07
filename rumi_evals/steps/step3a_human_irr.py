@@ -8,9 +8,12 @@ study exists (gap G1 resolved). It computes, per rubric indicator:
    expected to agree with "the humans" better than the humans agree with each other,
    so this bounds every AI number below.
 
-2. HUMAN-vs-AI — for each of the 6 AI models, Cohen's + quadratic-weighted kappa
-   between the human consensus and that model, per indicator, vs the framework's
-   0.70 deployment bar and 0.75 mature bar.
+2. HUMAN-vs-AI — for each of the 6 AI models, Cohen's + LINEAR-weighted kappa
+   (runbook convention; quadratic kept as a secondary column) between the human
+   consensus and that model, per indicator, vs the framework's 0.70 deployment
+   bar and 0.75 mature bar. DC-vs-each-individual-coach and a unit-identical
+   pooled coach-coach kappa ceiling make the like-for-like comparison; alpha
+   covers the multi-rater reliability CI and the exchangeability test.
 
 3. DIRECTIONAL BIAS — mean(AI ordinal) - mean(human ordinal) per indicator, so a
    systematic harsh/lenient tilt is visible (this is the "direction of disagreement"
@@ -44,6 +47,7 @@ from ..study_data import (
 RESULTS_DIR = PACKAGE_ROOT / "results"
 
 CATEGORY_NAMES = ["no", "partial", "yes"]
+SCALE = [0, 1, 2]  # full ordinal scale, pinned so weight matrices never shrink
 
 
 def _r3(x) -> float | None:
@@ -149,12 +153,17 @@ def _pooled_ceiling(units_by_rec: dict[int, dict[str, list[int]]], cfg: dict) ->
     }
 
 
-def _dc_vs_each_coach(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+def _dc_vs_each_coach(df: pd.DataFrame, cfg: dict) -> tuple[pd.DataFrame, dict]:
     """DC vs every INDIVIDUAL coach rating (not the consensus), pooled per
     (model, indicator). Treats DC as 'just another rater' — the consensus
-    comparison systematically inflates agreement, so both are reported."""
+    comparison systematically inflates agreement, so both are reported.
+
+    Returns (per-indicator table, pooled-over-everything linear kappa per model);
+    the pooled figure is the runbook's headline 'DC vs individual coach' number.
+    """
     min_n = cfg["study"]["min_paired_for_kappa"]
     records = []
+    pooled = {}
     for model, mdf in df[df["has_ai"]].groupby("run_label"):
         paired: dict[str, list[tuple[int, int]]] = {}
         for _, row in mdf.iterrows():
@@ -169,6 +178,14 @@ def _dc_vs_each_coach(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
                     h = normalize_token(r["indicators"].get(ind), cfg)
                     if h is not None:
                         paired.setdefault(ind, []).append((int(h), int(a)))
+        all_pts = [p for pts in paired.values() for p in pts]
+        if all_pts:
+            h = pd.Series([p[0] for p in all_pts])
+            a = pd.Series([p[1] for p in all_pts])
+            pooled[model] = {
+                "n_pairs": len(all_pts),
+                "weighted_kappa": _r3(cohen_kappa(h, a, weights="linear", categories=SCALE)),
+            }
         for ind, pts in paired.items():
             if len(pts) < min_n:
                 continue
@@ -179,11 +196,62 @@ def _dc_vs_each_coach(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
                 "indicator": ind,
                 "section": _section(ind, cfg),
                 "n_pairs": len(pts),
-                "weighted_kappa_linear": round(cohen_kappa(h, a, weights="linear"), 3),
-                "weighted_kappa_quadratic": round(cohen_kappa(h, a, weights="quadratic"), 3),
-                "exact_agreement": round(exact_agreement(h, a), 3),
+                "weighted_kappa": _r3(cohen_kappa(h, a, weights="linear", categories=SCALE)),
+                "weighted_kappa_quadratic": _r3(cohen_kappa(h, a, weights="quadratic", categories=SCALE)),
+                "exact_agreement": _r3(exact_agreement(h, a)),
             })
-    return pd.DataFrame(records)
+    return pd.DataFrame(records), pooled
+
+
+def _pairwise_kappa_ceiling(
+    units_by_rec: dict[int, dict[str, list[int]]], cfg: dict
+) -> tuple[dict, pd.DataFrame]:
+    """Runbook Step 3 ceiling: all coach-coach rating pairs pooled through the SAME
+    linear-weighted kappa used for the DC comparisons, so ceiling and DC numbers
+    are unit-identical. Pairs are symmetrized (both orders) because coach slots
+    are interchangeable draws from the pool, not consistent people."""
+    clusters: list[list[tuple[int, int]]] = []
+    per_ind: dict[str, list[tuple[int, int]]] = {}
+    for by_ind in units_by_rec.values():
+        rec_pairs = []
+        for ind, vals in by_ind.items():
+            for i in range(len(vals)):
+                for j in range(len(vals)):
+                    if i != j:
+                        rec_pairs.append((vals[i], vals[j]))
+                        per_ind.setdefault(ind, []).append((vals[i], vals[j]))
+        if rec_pairs:
+            clusters.append(rec_pairs)
+
+    def stat(cl):
+        pts = [p for rec in cl for p in rec]
+        return cohen_kappa(
+            pd.Series([p[0] for p in pts]), pd.Series([p[1] for p in pts]),
+            weights="linear", categories=SCALE,
+        )
+
+    kappa = stat(clusters) if clusters else float("nan")
+    lo, hi = cluster_bootstrap_ci(
+        clusters, stat, n_boot=cfg["study"]["bootstrap_n"], seed=cfg["study"]["bootstrap_seed"]
+    )
+    ind_rows = []
+    min_n = cfg["study"]["min_paired_for_kappa"]
+    for ind, pts in per_ind.items():
+        if len(pts) < min_n:
+            continue
+        h = pd.Series([p[0] for p in pts])
+        a = pd.Series([p[1] for p in pts])
+        ind_rows.append({
+            "indicator": ind,
+            "human_pairwise_kappa": _r3(cohen_kappa(h, a, weights="linear", categories=SCALE)),
+        })
+    pooled = {
+        "weighted_kappa": _r3(kappa),
+        "kappa_ci95": [_r3(lo), _r3(hi)],
+        "n_pairs_symmetrized": sum(len(rec) for rec in clusters),
+        "n_recordings": len(clusters),
+    }
+    return pooled, pd.DataFrame(ind_rows)
 
 
 def _exchangeability(
@@ -274,7 +342,7 @@ def _applicability(df: pd.DataFrame, cfg: dict) -> dict:
             "n": len(pts),
             "human_na_rate": round(float((h == 0).mean()), 4),
             "ai_na_rate": round(float((a == 0).mean()), 4),
-            "kappa_binary": _r3(cohen_kappa(h, a)),
+            "kappa_binary": _r3(cohen_kappa(h, a, categories=[0, 1])),
             "raw_agreement": _r3(exact_agreement(h, a)),
         })
     return {
@@ -313,11 +381,13 @@ def _human_vs_ai(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
                 "indicator": ind,
                 "section": _section(ind, cfg),
                 "n": len(pts),
-                "kappa": round(cohen_kappa(h, a), 3),
-                "weighted_kappa": round(cohen_kappa(h, a, weights="quadratic"), 3),
-                "weighted_kappa_linear": round(cohen_kappa(h, a, weights="linear"), 3),
-                "exact_agreement": round(exact_agreement(h, a), 3),
-                "ai_minus_human_mean": round(float(a.mean() - h.mean()), 3),
+                "kappa": _r3(cohen_kappa(h, a, categories=SCALE)),
+                # Runbook convention: LINEAR weights are the primary weighted kappa;
+                # quadratic half-forgives adjacent misses — DC's dominant error mode.
+                "weighted_kappa": _r3(cohen_kappa(h, a, weights="linear", categories=SCALE)),
+                "weighted_kappa_quadratic": _r3(cohen_kappa(h, a, weights="quadratic", categories=SCALE)),
+                "exact_agreement": _r3(exact_agreement(h, a)),
+                "ai_minus_human_mean": _r3(float(a.mean() - h.mean())),
             })
     return pd.DataFrame(records)
 
@@ -382,14 +452,28 @@ def run(backend, cfg: dict) -> dict:
     hva = _human_vs_ai(df, cfg)
     units_by_rec = _human_units(df, cfg)
     pooled = _pooled_ceiling(units_by_rec, cfg)
-    pairwise = _dc_vs_each_coach(df, cfg)
+    pairwise, dc_pooled = _dc_vs_each_coach(df, cfg)
+    kappa_ceiling, ceiling_ind_kappa = _pairwise_kappa_ceiling(units_by_rec, cfg)
     exchange = _exchangeability(df, units_by_rec, cfg)
     applicability = _applicability(df, cfg)
+
+    if len(ceiling_ind_kappa):
+        ceiling = ceiling.merge(ceiling_ind_kappa, on="indicator", how="left")
 
     RESULTS_DIR.mkdir(exist_ok=True)
     ceiling.to_csv(RESULTS_DIR / "step3a_human_ceiling.csv", index=False)
     hva.to_csv(RESULTS_DIR / "step3a_human_vs_ai.csv", index=False)
     pairwise.to_csv(RESULTS_DIR / "step3a_dc_vs_each_coach.csv", index=False)
+
+    # runbook headline: DC pooled linear kappa as a fraction of the human ceiling,
+    # both measured with the identical estimator and weight matrix
+    ceil_k = kappa_ceiling["weighted_kappa"]
+    ai_coverage = df[df["has_ai"]].groupby("run_label")["recording_id"].nunique().to_dict()
+    for m, d in dc_pooled.items():
+        d["low_coverage"] = bool(ai_coverage.get(m, 0) < cfg["study"]["min_ai_coverage"])
+        d["pct_of_human_ceiling"] = (
+            _r3(d["weighted_kappa"] / ceil_k) if d["weighted_kappa"] is not None and ceil_k else None
+        )
 
     th = cfg["thresholds"]["step3a_reliability"]
     min_cov = cfg["study"]["min_ai_coverage"]
@@ -430,6 +514,16 @@ def run(backend, cfg: dict) -> dict:
         "human_ceiling_median_pairwise_exact": round(float(ceiling["human_pairwise_exact"].median()), 3)
         if len(ceiling) else None,
         "human_ceiling_pooled": pooled,
+        "human_ceiling_pairwise_kappa": {
+            "note": "Runbook Step 3: all coach-coach pairs pooled through the same "
+            "linear-weighted kappa as the DC comparisons — the unit-identical ceiling.",
+            **kappa_ceiling,
+        },
+        "dc_vs_each_coach_pooled_by_model": {
+            "note": "Runbook headline: all DC-coach pairs pooled, linear-weighted "
+            "kappa, with pct_of_human_ceiling vs human_ceiling_pairwise_kappa.",
+            "by_model": dc_pooled,
+        },
         "exchangeability_delta_alpha": {
             "note": "alpha(3 coaches + DC as 4th rater) - alpha(3 coaches). delta ~ 0 "
             "=> DC is statistically exchangeable with a human coach. CI: cluster "
@@ -438,10 +532,12 @@ def run(backend, cfg: dict) -> dict:
         },
         "na_applicability_agreement": applicability,
         "dc_vs_each_coach_median_by_model": {
-            m: round(float(g["weighted_kappa_linear"].median()), 3)
+            m: _r3(float(g["weighted_kappa"].median()))
             for m, g in pairwise.groupby("model")
         } if len(pairwise) else {},
-        "criterion": f"weighted kappa >= {th['min_kappa_deploy']} per indicator (0.75 mature)",
+        "criterion": f"LINEAR-weighted kappa >= {th['min_kappa_deploy']} per indicator "
+        "(0.75 mature); weights per runbook — adjacent miss 0.5, extreme miss 1.0, "
+        "categories pinned to the full no/partial/yes scale",
         "best_model": best["model"] if best else None,
         "best_model_median_weighted_kappa": best["median_weighted_kappa"] if best else None,
         "any_model_meets_bar_overall": bool(best and best["median_weighted_kappa"] >= th["min_kappa_deploy"]),
@@ -449,16 +545,20 @@ def run(backend, cfg: dict) -> dict:
         "cross_llm_agreement": _cross_llm(df, cfg),
         "human_ceiling_per_indicator": ceiling.to_dict("records"),
         "interpretation": (
-            "Judge DC against the human ceiling, not the absolute 0.70 bar: "
-            "human_ceiling_pooled.alpha_ordinal is the ordinal Krippendorff alpha among "
-            "coaches (with a recording-clustered bootstrap CI) and no model can be "
-            "expected to beat it. The cleanest single verdict is "
-            "exchangeability_delta_alpha: if adding DC as a 4th rater does not drop "
-            "alpha (CI includes 0), DC is statistically exchangeable with a coach. "
-            "Where Fleiss/alpha look near-zero but gwet_ac2 is much higher, the "
-            "indicator has skewed prevalence (kappa paradox) — read prev_* columns "
-            "before concluding raters disagree. Consensus-based kappa "
-            "(human_vs_ai) is inflated relative to dc_vs_each_coach; report both."
+            "All weighted kappas are LINEAR with categories pinned to no/partial/yes "
+            "(runbook Step 2); quadratic is kept as an explicit secondary column only. "
+            "Judge DC against the human ceiling, not the absolute 0.70 bar — in kappa "
+            "units use human_ceiling_pairwise_kappa (same estimator and weights as the "
+            "DC numbers; pct_of_human_ceiling in dc_vs_each_coach_pooled_by_model is "
+            "the like-for-like headline). Alpha is kept for what kappa cannot do: "
+            "human_ceiling_pooled uses the full 3-rater structure with a clustered "
+            "bootstrap CI, and exchangeability_delta_alpha is the single cleanest "
+            "verdict — if adding DC as a 4th rater does not drop alpha (CI includes "
+            "0), DC is statistically exchangeable with a coach. Where Fleiss/alpha "
+            "look near-zero but gwet_ac2 is much higher, the indicator has skewed "
+            "prevalence (kappa paradox) — read prev_* columns before concluding "
+            "raters disagree. Consensus-based kappa (human_vs_ai) is inflated "
+            "relative to dc_vs_each_coach; report both."
         ),
         "key_finding_directional_bias": {
             "note": "Negative human_ceiling or large negative ai_minus_human means AI is harsher "

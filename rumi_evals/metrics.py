@@ -9,13 +9,21 @@ import numpy as np
 import pandas as pd
 
 
-def cohen_kappa(a: pd.Series, b: pd.Series, weights: str | None = None) -> float:
-    """Cohen's kappa between two raters. weights: None | 'linear' | 'quadratic'."""
+def cohen_kappa(
+    a: pd.Series, b: pd.Series, weights: str | None = None, categories: list | None = None
+) -> float:
+    """Cohen's kappa between two raters. weights: None | 'linear' | 'quadratic'.
+
+    categories: pass the full ordered scale (e.g. [0, 1, 2]) to pin the weight
+    matrix. Without it, categories are inferred from the data — and if one is
+    absent (e.g. nobody ever scored 'no'), the matrix shrinks and weighted
+    kappa silently degrades to unweighted.
+    """
     mask = a.notna() & b.notna()
     a, b = a[mask], b[mask]
     if len(a) == 0:
         return float("nan")
-    cats = np.sort(pd.unique(pd.concat([a, b])))
+    cats = np.asarray(categories) if categories is not None else np.sort(pd.unique(pd.concat([a, b])))
     n_cat = len(cats)
     if n_cat < 2:
         return float("nan")
