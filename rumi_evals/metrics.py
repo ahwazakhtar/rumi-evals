@@ -111,6 +111,121 @@ def fleiss_kappa(ratings: list[list[int]], n_categories: int) -> float:
     return float((p_bar - p_e) / (1 - p_e))
 
 
+def krippendorff_alpha(units: list[list[int]], level: str = "ordinal") -> float:
+    """Krippendorff's alpha for any number of raters per unit, missing allowed.
+
+    units: per unit, the list of category indices (0..q-1) actually assigned;
+    drop missing values before calling. Units with <2 values are ignored.
+    level: 'nominal' | 'ordinal' | 'interval'. Ordinal uses Krippendorff's
+    rank-based distance computed from the coincidence-matrix marginals.
+    """
+    units = [u for u in units if len(u) >= 2]
+    if not units:
+        return float("nan")
+    q = max(max(u) for u in units) + 1
+    coin = np.zeros((q, q))
+    for u in units:
+        m = len(u)
+        for i in range(m):
+            for j in range(m):
+                if i != j:
+                    coin[u[i], u[j]] += 1.0 / (m - 1)
+    n_c = coin.sum(axis=1)
+    n = n_c.sum()
+    if n <= 1:
+        return float("nan")
+
+    delta = np.zeros((q, q))
+    for c in range(q):
+        for k in range(c + 1, q):
+            if level == "nominal":
+                d = 1.0
+            elif level == "interval":
+                d = float((c - k) ** 2)
+            else:  # ordinal
+                d = float((n_c[c : k + 1].sum() - (n_c[c] + n_c[k]) / 2) ** 2)
+            delta[c, k] = delta[k, c] = d
+
+    d_o = (coin * delta).sum()
+    d_e = (np.outer(n_c, n_c) * delta).sum() / (n - 1)
+    if d_e == 0:
+        return float("nan")
+    return float(1 - d_o / d_e)
+
+
+def _agreement_weights(q: int, weights: str) -> np.ndarray:
+    """Agreement weight matrix (1 on diagonal): 'identity'|'linear'|'quadratic'|'ordinal'."""
+    if weights == "identity":
+        return np.eye(q)
+    diff = np.abs(np.subtract.outer(np.arange(q), np.arange(q))).astype(float)
+    if weights == "linear":
+        return 1 - diff / (q - 1)
+    if weights == "quadratic":
+        return 1 - (diff / (q - 1)) ** 2
+    # Gwet's ordinal weights: M_ck = C(|c-k|+1, 2), normalized by the max.
+    m = (diff + 1) * diff / 2
+    return 1 - m / m.max()
+
+
+def gwet_ac(units: list[list[int]], n_categories: int, weights: str = "ordinal") -> float:
+    """Gwet's AC1 (weights='identity') / AC2 for multi-rater data, missing allowed.
+
+    units: per unit, the list of category indices assigned (missing dropped).
+    Units with 1 rating still inform chance agreement; <2 skip percent agreement.
+    """
+    units = [u for u in units if len(u) >= 1]
+    q = n_categories
+    if q < 2 or not units:
+        return float("nan")
+    w = _agreement_weights(q, weights)
+
+    pi = np.zeros(q)
+    pa_terms = []
+    for u in units:
+        r = np.bincount(u, minlength=q).astype(float)
+        r_u = r.sum()
+        pi += r / r_u
+        if r_u >= 2:
+            r_star = w @ r
+            pa_terms.append(float((r * (r_star - 1)).sum() / (r_u * (r_u - 1))))
+    if not pa_terms:
+        return float("nan")
+    pi /= len(units)
+    p_a = float(np.mean(pa_terms))
+    t_w = float(w.sum())
+    p_e = t_w / (q * (q - 1)) * float((pi * (1 - pi)).sum())
+    if p_e >= 1:
+        return float("nan")
+    return float((p_a - p_e) / (1 - p_e))
+
+
+def cluster_bootstrap_ci(
+    clusters: list, stat_fn, n_boot: int = 500, seed: int = 0, ci: float = 0.95
+) -> tuple[float, float]:
+    """Percentile CI for stat_fn(list_of_clusters), resampling clusters with replacement.
+
+    clusters: list of per-cluster payloads (e.g. one recording's units); stat_fn
+    receives a resampled list of payloads and returns a float (nan allowed).
+    """
+    if not clusters:
+        return (float("nan"), float("nan"))
+    rng = np.random.default_rng(seed)
+    n = len(clusters)
+    stats = []
+    for _ in range(n_boot):
+        idx = rng.integers(0, n, n)
+        s = stat_fn([clusters[i] for i in idx])
+        if not np.isnan(s):
+            stats.append(s)
+    if len(stats) < max(20, n_boot // 10):
+        return (float("nan"), float("nan"))
+    lo = (1 - ci) / 2
+    return (
+        float(np.quantile(stats, lo)),
+        float(np.quantile(stats, 1 - lo)),
+    )
+
+
 def indicator_agreement_table(
     df: pd.DataFrame, rater_a: str, rater_b: str, indicators: list[str]
 ) -> pd.DataFrame:

@@ -37,6 +37,22 @@ def normalize_token(v, cfg: dict) -> float | None:
     return _order_map(cfg).get(t)
 
 
+def applicability_token(v, cfg: dict) -> int | None:
+    """1 if the rater scored the indicator, 0 if they marked it na, None if absent.
+
+    Distinguishes 'rater judged the indicator not applicable' (a real decision we
+    can measure agreement on) from 'no rating at all' (missing).
+    """
+    if v is None:
+        return None
+    t = str(v).strip().lower()
+    if t in ("", "none"):
+        return None
+    if t in {str(s).lower() for s in cfg["study"]["na_tokens"]}:
+        return 0
+    return 1 if t in _order_map(cfg) else None
+
+
 def _connect(url: str):
     import psycopg  # lazy
 

@@ -24,10 +24,58 @@ import numpy as np
 import pandas as pd
 
 from ..config import PACKAGE_ROOT
-from ..metrics import cohen_kappa, exact_agreement, fleiss_kappa
-from ..study_data import ai_scores, available, indicators_for, load_compiled, normalize_token
+from ..metrics import (
+    cluster_bootstrap_ci,
+    cohen_kappa,
+    exact_agreement,
+    fleiss_kappa,
+    gwet_ac,
+    krippendorff_alpha,
+)
+from ..study_data import (
+    ai_scores,
+    applicability_token,
+    available,
+    indicators_for,
+    load_compiled,
+    normalize_token,
+)
 
 RESULTS_DIR = PACKAGE_ROOT / "results"
+
+CATEGORY_NAMES = ["no", "partial", "yes"]
+
+
+def _r3(x) -> float | None:
+    """Round to 3dp; NaN becomes None so results stay valid JSON."""
+    return None if x is None or (isinstance(x, float) and np.isnan(x)) else round(float(x), 3)
+
+
+def _section(ind: str, cfg: dict) -> str:
+    return "B" if ind in set(cfg["study"]["section_b"]) else "C"
+
+
+def _human_units(df: pd.DataFrame, cfg: dict) -> dict[int, dict[str, list[int]]]:
+    """Per recording, per indicator, the list of human ordinal ratings (na dropped).
+
+    Deduped on recording_id (study_compiled repeats recordings across model runs).
+    """
+    out: dict[int, dict[str, list[int]]] = {}
+    seen = set()
+    for _, row in df.iterrows():
+        rid = row["recording_id"]
+        if rid in seen or not isinstance(row["human_raters"], list):
+            continue
+        seen.add(rid)
+        by_ind = {}
+        for ind in indicators_for(row["subject_key"], cfg):
+            vals = [normalize_token(r["indicators"].get(ind), cfg) for r in row["human_raters"]]
+            vals = [int(v) for v in vals if v is not None]
+            if vals:
+                by_ind[ind] = vals
+        if by_ind:
+            out[rid] = by_ind
+    return out
 
 
 def _human_ceiling(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
@@ -58,13 +106,184 @@ def _human_ceiling(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
 
     rows = []
     for ind, vecs in per_ind.items():
+        # units for alpha/AC2: expand each count vector back to a rating list
+        units = [[c for c in range(3) for _ in range(int(v[c]))] for v in vecs]
+        totals = np.array(vecs, dtype=float).sum(axis=0)
+        prev = totals / totals.sum() if totals.sum() else totals
         rows.append({
             "indicator": ind,
+            "section": _section(ind, cfg),
             "n_recordings": len(vecs),
-            "human_fleiss_kappa": round(fleiss_kappa(vecs, 3), 3),
-            "human_pairwise_exact": round(float(np.mean(exact_pairs[ind])), 3),
+            "human_fleiss_kappa": _r3(fleiss_kappa(vecs, 3)),
+            "human_alpha_ordinal": _r3(krippendorff_alpha(units, level="ordinal")),
+            "human_gwet_ac2_ordinal": _r3(gwet_ac(units, 3, weights="ordinal")),
+            "human_pairwise_exact": _r3(float(np.mean(exact_pairs[ind]))),
+            **{f"prev_{CATEGORY_NAMES[c]}": round(float(prev[c]), 3) for c in range(3)},
         })
     return pd.DataFrame(rows)
+
+
+def _pooled_ceiling(units_by_rec: dict[int, dict[str, list[int]]], cfg: dict) -> dict:
+    """One pooled human-human alpha over all (recording x indicator) units, with a
+    bootstrap CI that resamples recordings (ratings within a recording are clustered)."""
+    clusters = [
+        [vals for vals in by_ind.values() if len(vals) >= 2]
+        for by_ind in units_by_rec.values()
+    ]
+    clusters = [c for c in clusters if c]
+
+    def stat(cl):
+        return krippendorff_alpha([u for rec in cl for u in rec], level="ordinal")
+
+    alpha = stat(clusters)
+    lo, hi = cluster_bootstrap_ci(
+        clusters, stat, n_boot=cfg["study"]["bootstrap_n"], seed=cfg["study"]["bootstrap_seed"]
+    )
+    all_units = [u for rec in clusters for u in rec]
+    return {
+        "alpha_ordinal": _r3(alpha),
+        "alpha_ci95": [_r3(lo), _r3(hi)],
+        "gwet_ac2_ordinal": _r3(gwet_ac(all_units, 3, weights="ordinal")),
+        "n_recordings": len(clusters),
+        "n_units": len(all_units),
+    }
+
+
+def _dc_vs_each_coach(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+    """DC vs every INDIVIDUAL coach rating (not the consensus), pooled per
+    (model, indicator). Treats DC as 'just another rater' — the consensus
+    comparison systematically inflates agreement, so both are reported."""
+    min_n = cfg["study"]["min_paired_for_kappa"]
+    records = []
+    for model, mdf in df[df["has_ai"]].groupby("run_label"):
+        paired: dict[str, list[tuple[int, int]]] = {}
+        for _, row in mdf.iterrows():
+            if not isinstance(row["human_raters"], list):
+                continue
+            ai = ai_scores(row)
+            for ind in indicators_for(row["subject_key"], cfg):
+                a = normalize_token(ai.get(ind), cfg)
+                if a is None:
+                    continue
+                for r in row["human_raters"]:
+                    h = normalize_token(r["indicators"].get(ind), cfg)
+                    if h is not None:
+                        paired.setdefault(ind, []).append((int(h), int(a)))
+        for ind, pts in paired.items():
+            if len(pts) < min_n:
+                continue
+            h = pd.Series([p[0] for p in pts])
+            a = pd.Series([p[1] for p in pts])
+            records.append({
+                "model": model,
+                "indicator": ind,
+                "section": _section(ind, cfg),
+                "n_pairs": len(pts),
+                "weighted_kappa_linear": round(cohen_kappa(h, a, weights="linear"), 3),
+                "weighted_kappa_quadratic": round(cohen_kappa(h, a, weights="quadratic"), 3),
+                "exact_agreement": round(exact_agreement(h, a), 3),
+            })
+    return pd.DataFrame(records)
+
+
+def _exchangeability(
+    df: pd.DataFrame, units_by_rec: dict[int, dict[str, list[int]]], cfg: dict
+) -> list[dict]:
+    """Headline test: does pooled alpha drop when DC joins the 3 coaches as a 4th
+    rater? delta ~ 0 means DC is statistically exchangeable with a human coach.
+    Computed per model, on the recordings that model scored; CI via paired
+    cluster bootstrap on recordings."""
+    min_rec = cfg["study"]["min_exchangeability_recordings"]
+    out = []
+    for model, mdf in df[df["has_ai"]].groupby("run_label"):
+        # clusters: per recording, list of (human_unit, human_plus_ai_unit) pairs
+        clusters = []
+        for _, row in mdf.drop_duplicates("recording_id").iterrows():
+            rid = row["recording_id"]
+            by_ind = units_by_rec.get(rid)
+            if not by_ind:
+                continue
+            ai = ai_scores(row)
+            pairs = []
+            for ind, vals in by_ind.items():
+                if len(vals) < 2:
+                    continue
+                a = normalize_token(ai.get(ind), cfg)
+                pairs.append((vals, vals + [int(a)] if a is not None else vals))
+            if pairs:
+                clusters.append(pairs)
+        if len(clusters) < min_rec:
+            continue
+
+        def stat_delta(cl):
+            h = [p[0] for rec in cl for p in rec]
+            ha = [p[1] for rec in cl for p in rec]
+            return krippendorff_alpha(ha, level="ordinal") - krippendorff_alpha(h, level="ordinal")
+
+        alpha_h = krippendorff_alpha([p[0] for rec in clusters for p in rec], level="ordinal")
+        alpha_ha = krippendorff_alpha([p[1] for rec in clusters for p in rec], level="ordinal")
+        lo, hi = cluster_bootstrap_ci(
+            clusters, stat_delta,
+            n_boot=cfg["study"]["bootstrap_n"], seed=cfg["study"]["bootstrap_seed"],
+        )
+        out.append({
+            "model": model,
+            "n_recordings": len(clusters),
+            "alpha_humans_only": _r3(alpha_h),
+            "alpha_humans_plus_ai": _r3(alpha_ha),
+            "delta_alpha": _r3(alpha_ha - alpha_h),
+            "delta_alpha_ci95": [_r3(lo), _r3(hi)],
+            "exchangeable": bool(hi >= 0) if not np.isnan(hi) else None,
+        })
+    return sorted(out, key=lambda r: -(r["delta_alpha"] if r["delta_alpha"] is not None else -9))
+
+
+def _applicability(df: pd.DataFrame, cfg: dict) -> dict:
+    """Stage 1 of the two-stage N/A handling: do raters agree an indicator even
+    APPLIES (scored vs marked na)? Score-level stats elsewhere treat na as missing;
+    this quantifies what that convention hides."""
+    human_units: list[list[int]] = []
+    n_na = n_rated = 0
+    seen = set()
+    dc_pairs: dict[str, list[tuple[int, int]]] = {}
+    for _, row in df.iterrows():
+        rid = row["recording_id"]
+        inds = indicators_for(row["subject_key"], cfg)
+        if rid not in seen and isinstance(row["human_raters"], list):
+            seen.add(rid)
+            for ind in inds:
+                vals = [applicability_token(r["indicators"].get(ind), cfg) for r in row["human_raters"]]
+                vals = [v for v in vals if v is not None]
+                n_na += sum(1 for v in vals if v == 0)
+                n_rated += len(vals)
+                if len(vals) >= 2:
+                    human_units.append(vals)
+        if row["has_ai"] and isinstance(row["human_consensus"], dict):
+            ai = ai_scores(row)
+            for ind in inds:
+                h = applicability_token(row["human_consensus"].get(ind), cfg)
+                a = applicability_token(ai.get(ind), cfg)
+                if h is not None and a is not None:
+                    dc_pairs.setdefault(row["run_label"], []).append((h, a))
+    per_model = []
+    for model, pts in dc_pairs.items():
+        h = pd.Series([p[0] for p in pts])
+        a = pd.Series([p[1] for p in pts])
+        per_model.append({
+            "model": model,
+            "n": len(pts),
+            "human_na_rate": round(float((h == 0).mean()), 4),
+            "ai_na_rate": round(float((a == 0).mean()), 4),
+            "kappa_binary": _r3(cohen_kappa(h, a)),
+            "raw_agreement": _r3(exact_agreement(h, a)),
+        })
+    return {
+        "note": "Agreement on WHETHER an indicator applies (scored vs na). All other "
+        "stats treat na as missing — this is the na-decision agreement itself.",
+        "human_na_rate": round(n_na / n_rated, 4) if n_rated else None,
+        "human_alpha_binary": _r3(krippendorff_alpha(human_units, level="nominal")),
+        "dc_vs_consensus_by_model": sorted(per_model, key=lambda r: -(r["n"])),
+    }
 
 
 def _human_vs_ai(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
@@ -92,9 +311,11 @@ def _human_vs_ai(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
             records.append({
                 "model": model,
                 "indicator": ind,
+                "section": _section(ind, cfg),
                 "n": len(pts),
                 "kappa": round(cohen_kappa(h, a), 3),
                 "weighted_kappa": round(cohen_kappa(h, a, weights="quadratic"), 3),
+                "weighted_kappa_linear": round(cohen_kappa(h, a, weights="linear"), 3),
                 "exact_agreement": round(exact_agreement(h, a), 3),
                 "ai_minus_human_mean": round(float(a.mean() - h.mean()), 3),
             })
@@ -159,10 +380,16 @@ def run(backend, cfg: dict) -> dict:
     df = load_compiled(cfg)
     ceiling = _human_ceiling(df, cfg)
     hva = _human_vs_ai(df, cfg)
+    units_by_rec = _human_units(df, cfg)
+    pooled = _pooled_ceiling(units_by_rec, cfg)
+    pairwise = _dc_vs_each_coach(df, cfg)
+    exchange = _exchangeability(df, units_by_rec, cfg)
+    applicability = _applicability(df, cfg)
 
     RESULTS_DIR.mkdir(exist_ok=True)
     ceiling.to_csv(RESULTS_DIR / "step3a_human_ceiling.csv", index=False)
     hva.to_csv(RESULTS_DIR / "step3a_human_vs_ai.csv", index=False)
+    pairwise.to_csv(RESULTS_DIR / "step3a_dc_vs_each_coach.csv", index=False)
 
     th = cfg["thresholds"]["step3a_reliability"]
     min_cov = cfg["study"]["min_ai_coverage"]
@@ -196,8 +423,24 @@ def run(backend, cfg: dict) -> dict:
         "n_models_full_coverage": len(headline),
         "human_ceiling_median_fleiss": round(float(ceiling["human_fleiss_kappa"].median()), 3)
         if len(ceiling) else None,
+        "human_ceiling_median_alpha_ordinal": round(float(ceiling["human_alpha_ordinal"].median()), 3)
+        if len(ceiling) else None,
+        "human_ceiling_median_gwet_ac2": round(float(ceiling["human_gwet_ac2_ordinal"].median()), 3)
+        if len(ceiling) else None,
         "human_ceiling_median_pairwise_exact": round(float(ceiling["human_pairwise_exact"].median()), 3)
         if len(ceiling) else None,
+        "human_ceiling_pooled": pooled,
+        "exchangeability_delta_alpha": {
+            "note": "alpha(3 coaches + DC as 4th rater) - alpha(3 coaches). delta ~ 0 "
+            "=> DC is statistically exchangeable with a human coach. CI: cluster "
+            "bootstrap over recordings.",
+            "by_model": exchange,
+        },
+        "na_applicability_agreement": applicability,
+        "dc_vs_each_coach_median_by_model": {
+            m: round(float(g["weighted_kappa_linear"].median()), 3)
+            for m, g in pairwise.groupby("model")
+        } if len(pairwise) else {},
         "criterion": f"weighted kappa >= {th['min_kappa_deploy']} per indicator (0.75 mature)",
         "best_model": best["model"] if best else None,
         "best_model_median_weighted_kappa": best["median_weighted_kappa"] if best else None,
@@ -206,12 +449,16 @@ def run(backend, cfg: dict) -> dict:
         "cross_llm_agreement": _cross_llm(df, cfg),
         "human_ceiling_per_indicator": ceiling.to_dict("records"),
         "interpretation": (
-            "The 0.70 kappa bar is measured against human consensus, but the human "
-            "ceiling above shows coaches barely agree with each other — so the bar is "
-            "currently unreachable by construction. Fix rater calibration / rubric "
-            "clarity (raise the ceiling) before judging any model against 0.70. "
-            "Separately, every model scores systematically harsher than humans "
-            "(see directional bias)."
+            "Judge DC against the human ceiling, not the absolute 0.70 bar: "
+            "human_ceiling_pooled.alpha_ordinal is the ordinal Krippendorff alpha among "
+            "coaches (with a recording-clustered bootstrap CI) and no model can be "
+            "expected to beat it. The cleanest single verdict is "
+            "exchangeability_delta_alpha: if adding DC as a 4th rater does not drop "
+            "alpha (CI includes 0), DC is statistically exchangeable with a coach. "
+            "Where Fleiss/alpha look near-zero but gwet_ac2 is much higher, the "
+            "indicator has skewed prevalence (kappa paradox) — read prev_* columns "
+            "before concluding raters disagree. Consensus-based kappa "
+            "(human_vs_ai) is inflated relative to dc_vs_each_coach; report both."
         ),
         "key_finding_directional_bias": {
             "note": "Negative human_ceiling or large negative ai_minus_human means AI is harsher "

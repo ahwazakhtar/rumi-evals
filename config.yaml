@@ -65,6 +65,12 @@ study:
     science: [S1, S2]
   min_paired_for_kappa: 15      # skip an indicator/model with fewer paired points
   wobble_model_run_label: gpt-5.1   # which study model the DC API reproduces
+  # Cluster bootstrap (resampling recordings) for CIs on alpha / delta-alpha.
+  bootstrap_n: 500
+  bootstrap_seed: 20260706
+  # Exchangeability needs recordings with >=2 human raters AND an AI score; while
+  # V2 human scoring is mid-run this is scarcer than overall AI coverage.
+  min_exchangeability_recordings: 20
 
 dc_api:
   base_url: https://digitalcoach.taleemabad.com
