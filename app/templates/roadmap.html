@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Rumi Evals — Roadmap{% endblock %}
+{% block content %}
+{% set r = roadmap %}
+<h1>Rumi evaluation roadmap</h1>
+<p class="lede">The 8-step Rumi Evaluation Measurement Framework, all within <strong>Stage&nbsp;1
+(&ldquo;Develop the solution&rdquo;)</strong> of the EdTech Quality Cycle. Each card shows the
+framework&rsquo;s own pass/fail criterion against the real warehouse and study data. Click any
+step for the numbers, charts and what unblocks it.</p>
+
+<div class="summary-row" style="margin:16px 0 4px;">
+  <span class="pill"><span class="dot pass"></span>{{ r.counts.pass }} pass</span>
+  <span class="pill"><span class="dot fail"></span>{{ r.counts.fail }} fail</span>
+  <span class="pill"><span class="dot partial"></span>{{ r.counts.partial }} partial</span>
+  <span class="pill"><span class="dot blocked"></span>{{ r.counts.blocked }} blocked</span>
+</div>
+<p class="src-note">
+  Source: {{ r.source_label }}.
+  {% if r.live_3a %}Step&nbsp;3a is refreshed <strong>live from the study Postgres</strong>.
+  {% else %}Step&nbsp;3a live refresh unavailable — showing cached study results.{% endif %}
+</p>
+
+<div class="banner headline">
+  <h3>Headline — Step 3a: the 0.70 reliability bar is currently unreachable by construction</h3>
+  <p>The paired study resolved the human-vs-AI pairing gap (G1), and it surfaced the real crux:
+  the <strong>human coaches barely agree with each other</strong> (median inter-coach Fleiss
+  κ&nbsp;≈&nbsp;0.068, near chance). No model can match a &ldquo;human consensus&rdquo; better than
+  the humans match themselves — so a failing kappa is as much a rater-calibration / rubric-clarity
+  problem as a model problem. Separately, every model scores <strong>systematically harsher</strong>
+  than human coaches. <a href="/step/3a">See the full Step&nbsp;3a breakdown →</a></p>
+</div>
+
+{% for g in r.groups %}
+<section class="group">
+  <div class="group-head">
+    <h2>{{ g.title }}</h2>
+    <span class="sub">{{ g.subtitle }}</span>
+  </div>
+  <div class="cards">
+    {% for c in g.cards %}
+    <a class="card {{ c.status }}" href="/step/{{ c.id }}">
+      <div class="card-top">
+        <span class="card-step">Step {{ c.num }}</span>
+        <span class="badge {{ c.status }}">{{ c.status_label }}</span>
+      </div>
+      <h3>{{ c.title }}</h3>
+      <p>{{ c.headline }}</p>
+      {% if c.gap %}<div class="card-gap">Gap: {{ c.gap }}</div>{% endif %}
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+
+<div class="banner">
+  <h3>Where this sits in the wider lifecycle</h3>
+  <p>These 8 steps are the product &amp; AI-evaluation work of <strong>Stage&nbsp;1</strong>.
+  Stages 2 (uptake), 3 (experience/engagement) and 4 (impact/cost) of the EdTech Quality Cycle
+  are the broader roadmap ahead — each surfaced significant instrumentation gaps on audit and is
+  largely unbuilt today. See <a href="/gaps">Gaps</a> and <a href="/data">Data sources</a>.</p>
+</div>
+{% endblock %}

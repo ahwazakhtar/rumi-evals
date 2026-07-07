@@ -1,0 +1,16 @@
+# Rumi Evals dashboard — pinned for a reproducible Railway build (Python 3.12).
+# The web layer stays light: heavy/optional eval deps (anthropic, jiwer,
+# google-cloud-bigquery) are NOT imported by the dashboard and are omitted so the
+# app boots fast. Step 3a's live study read only needs psycopg + pandas/numpy.
+
+# --- web ---
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+jinja2==3.1.4
+
+# --- imported by rumi_evals (step3a_human_irr / study_data / config) ---
+pandas==2.2.3
+numpy==2.1.3
+scipy==1.14.1
+pyyaml==6.0.2
+psycopg[binary]==3.2.3

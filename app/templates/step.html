@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Step {{ v.meta.num }} — {{ v.meta.title }}{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="/">Roadmap</a> &nbsp;/&nbsp; Step {{ v.meta.num }}</div>
+
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+  <span class="card-step">Step {{ v.meta.num }}</span>
+  <span class="badge {{ v.status }}">{{ v.status_label }}</span>
+</div>
+<h1 style="margin-top:8px;">{{ v.meta.title }}</h1>
+<p class="lede">{{ v.headline }}</p>
+
+{% if v.is_3a %}
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:8px 0 4px;">
+  {% if v.live_3a %}
+    <span class="live-tag live"><span class="dot"></span>Live from study Postgres</span>
+  {% else %}
+    <span class="live-tag cached"><span class="dot"></span>Cached study results</span>
+  {% endif %}
+  <form class="refresh-form" method="post" action="/step/3a/refresh">
+    <button class="btn ghost" type="submit">↻ Refresh from study DB</button>
+  </form>
+</div>
+{% if v.live_3a_error %}<p class="src-note">{{ v.live_3a_error }}</p>{% endif %}
+{% endif %}
+
+<!-- criterion / method -->
+<div class="panel">
+  <div class="def-grid">
+    <div class="def">
+      <h4>Framework criterion</h4>
+      <p>{{ v.meta.criterion }}</p>
+    </div>
+    <div class="def">
+      <h4>How it&rsquo;s measured</h4>
+      <p>{{ v.meta.measure }}</p>
+    </div>
+  </div>
+  <div class="def" style="margin-top:14px;">
+    <h4>Reads from</h4>
+    <p>{{ v.meta.reads }}</p>
+  </div>
+</div>
+
+{% if v.stats %}
+<div class="stats">
+  {% for s in v.stats %}
+  <div class="stat">
+    <div class="v {{ s.tone }}">{{ s.value }}</div>
+    <div class="l">{{ s.label }}</div>
+    <div class="s">{{ s.sub }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if v.interpretation %}
+<div class="banner headline" style="border-left-color:var(--warning);background:linear-gradient(90deg,var(--warning-wash),var(--surface-1) 55%);">
+  <h3>How to read these numbers</h3>
+  <p>{{ v.interpretation }}</p>
+</div>
+{% endif %}
+
+{% for c in v.charts %}
+<div class="chart">
+  <h3>{{ c.title }}</h3>
+  <div class="chart-box">{{ c.svg | safe }}</div>
+  {% if c.caption %}<p class="cap">{{ c.caption }}</p>{% endif %}
+</div>
+{% endfor %}
+
+{% for t in v.tables %}
+<div class="tbl-title">{{ t.title }}</div>
+<div class="table-wrap">
+  <table>
+    <thead><tr>{% for col in t.columns %}<th>{{ col }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for row in t.rows %}
+      <tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if t.note %}<p class="tnote">{{ t.note }}</p>{% endif %}
+{% endfor %}
+
+{% if v.caveats %}
+<h2>Caveats</h2>
+<ul class="caveats">
+  {% for c in v.caveats %}<li>{{ c }}</li>{% endfor %}
+</ul>
+{% endif %}
+
+<!-- unblock panel -->
+<h2>What unblocks this / next action</h2>
+<div class="panel unblock {{ v.gap.status if v.gap else '' }}">
+  {% if v.gap %}
+  <div class="k">{{ v.gap.id }} — {{ v.gap.title }}
+    <span class="badge {{ 'pass' if v.gap.status == 'resolved' else 'partial' }}" style="margin-left:6px;">{{ v.gap.status | upper }}</span>
+  </div>
+  {% else %}
+  <div class="k">Runs today — no gap blocking</div>
+  {% endif %}
+  <p>{{ v.meta.next_action }}</p>
+  {% if v.gap %}<p style="font-size:13px;"><a href="/gaps">Full gap register →</a></p>{% endif %}
+</div>
+
+<div class="stepnav">
+  {% if nav.prev %}<a href="/step/{{ nav.prev }}">← Step {{ nav.prev }}</a>{% else %}<span></span>{% endif %}
+  {% if nav.next %}<a href="/step/{{ nav.next }}">Step {{ nav.next }} →</a>{% else %}<span></span>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Rumi Evals{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%8A%3C/text%3E%3C/svg%3E">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('rumi-theme');
+        if (t) document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">Rumi Evals <span>· measurement dashboard</span></div>
+      <nav class="nav">
+        <a href="/" class="{{ 'on' if active == 'roadmap' else '' }}">Roadmap</a>
+        <a href="/gaps" class="{{ 'on' if active == 'gaps' else '' }}">Gaps</a>
+        <a href="/data" class="{{ 'on' if active == 'data' else '' }}">Data sources</a>
+        <button class="theme-btn" id="theme-btn" title="Toggle light / dark" aria-label="Toggle theme">◐</button>
+      </nav>
+    </div>
+  </header>
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+  <script>
+    document.getElementById('theme-btn').addEventListener('click', function () {
+      var el = document.documentElement;
+      var cur = el.getAttribute('data-theme');
+      if (!cur) cur = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      var next = cur === 'dark' ? 'light' : 'dark';
+      el.setAttribute('data-theme', next);
+      try { localStorage.setItem('rumi-theme', next); } catch (e) {}
+    });
+  </script>
+</body>
+</html>

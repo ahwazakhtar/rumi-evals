@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Rumi Evals — Gap register{% endblock %}
+{% block content %}
+<h1>Gap register</h1>
+<p class="lede">What the framework demands vs. what the data supports. Every gap was validated
+directly against the warehouse and study DB on 2026-07-06. G1 is resolved by the paired study;
+G2–G5 remain blocked, each with the smallest concrete step to unblock it.</p>
+
+<div class="summary-row" style="margin:14px 0 24px;">
+  <span class="pill"><span class="dot pass"></span>1 resolved</span>
+  <span class="pill"><span class="dot partial"></span>4 blocked</span>
+</div>
+
+{% for g in gaps %}
+<div class="panel unblock {{ g.status }}">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+    <h3 style="margin:0;">{{ g.id }} — {{ g.title }}</h3>
+    <span class="badge {{ 'pass' if g.status == 'resolved' else 'partial' }}">{{ g.status | upper }}</span>
+    <span class="tag-list" style="margin:0;">
+      {% for sid, title in g.step_titles %}<a class="tag" href="/step/{{ sid }}">Step {{ sid }} · {{ title }}</a>{% endfor %}
+    </span>
+  </div>
+  <div class="def" style="margin-bottom:10px;"><h4>Framework wants</h4><p>{{ g.wants }}</p></div>
+  <div class="def" style="margin-bottom:10px;"><h4>Reality</h4><p>{{ g.reality }}</p></div>
+  <div class="def"><h4>{{ 'Resolved by' if g.status == 'resolved' else 'To unblock' }}</h4><p>{{ g.resolution }}</p></div>
+</div>
+{% endfor %}
+{% endblock %}

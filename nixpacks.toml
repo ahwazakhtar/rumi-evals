@@ -1,0 +1,16 @@
+# Nixpacks build for the Rumi Evals dashboard.
+# Pins Python 3.12 and installs the LIGHT dashboard deps (app/requirements.txt)
+# rather than the repo-root requirements.txt (which pulls anthropic/jiwer that the
+# web app never imports). Start command honours Railway's $PORT.
+
+[variables]
+NIXPACKS_PYTHON_VERSION = "3.12"
+
+[phases.install]
+cmds = [
+  "python -m venv --copies /opt/venv",
+  ". /opt/venv/bin/activate && pip install --upgrade pip && pip install -r app/requirements.txt",
+]
+
+[start]
+cmd = "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Rumi Evals — Data sources{% endblock %}
+{% block content %}
+<h1>Data sources</h1>
+<p class="lede">The dashboard is a presentation layer over the <code>rumi_evals</code> package, which
+draws on three sources. Only the paired study Postgres is read live (for Step&nbsp;3a); the rest is
+served from a cached full-run. Secrets are read from environment variables only and never committed.</p>
+
+{% for s in sources %}
+<div class="panel">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+    <h3 style="margin:0;">{{ s.name }}</h3>
+    <span class="tag">{{ s.backend }}</span>
+  </div>
+  <p>{{ s.role }}</p>
+  <div class="def" style="margin-top:10px;">
+    <h4>Feeds</h4>
+    <span class="tag-list" style="margin-top:4px;">
+      {% for sid, title in s.feeds_titles %}<a class="tag" href="/step/{{ sid }}">Step {{ sid }} · {{ title }}</a>{% endfor %}
+    </span>
+  </div>
+  {% if s.notes %}
+  <ul class="caveats" style="margin-top:12px;">
+    {% for n in s.notes %}<li style="color:var(--text-secondary);">{{ n }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+</div>
+{% endfor %}
+
+<div class="banner">
+  <h3>Secrets &amp; environment</h3>
+  <p><code>RUMI_STUDY_PG_URL</code> (study Postgres, enables live Step&nbsp;3a) ·
+  <code>DC_API_KEY</code> (Digital Coach API, wobble/guardrail harnesses) ·
+  <code>APP_PASSWORD</code> (optional — gates the whole dashboard behind HTTP Basic auth).
+  Because this app surfaces scores and connects to a database, teams should set
+  <code>APP_PASSWORD</code> in any shared deployment.</p>
+</div>
+{% endblock %}

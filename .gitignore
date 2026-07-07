@@ -1,0 +1,22 @@
+# Secrets — NEVER commit these
+postgres.txt
+api key.txt
+*.env
+.env
+
+# Generated
+results/
+data/extracts/
+data/gold_transcripts/gold.csv
+__pycache__/
+*.pyc
+
+# Python envs / tooling
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# NOTE: results/ is gitignored, so the dashboard ships its own committed
+# fallback snapshot in app/cached/ — do NOT ignore that directory. The app
+# prefers a live results/latest.json when present and falls back to app/cached/.

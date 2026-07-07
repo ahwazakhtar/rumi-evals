@@ -1,0 +1,78 @@
+# Rumi Evals — configuration
+# Thresholds come directly from "Rumi Evaluation Measurement Framework (v2)".
+
+data:
+  # "bigquery" reads live via google-cloud-bigquery (ADC credentials),
+  # "csv" reads extracts from data/extracts/<query_name>.csv
+  backend: csv
+  bigquery_project: null        # set to the Taleemabad GCP project id for live reads
+  extracts_dir: data/extracts
+
+judge:
+  model: claude-opus-4-8        # LLM judge for steps 3b and 4a
+  max_tokens: 2048
+  # For runs over ~200 sessions, set batch: true to use the Message Batches API (50% cost)
+  batch: false
+
+thresholds:
+  step1_audio_capture:
+    max_rejection_rate: 0.05          # <5% of recordings rejected at the gate
+  step2_stt:
+    max_wer_primary: 0.05             # WER below 5% primary instructional language
+    max_wer_codeswitched: 0.10        # below 10% for code-switched segments
+  step3a_reliability:
+    min_kappa_deploy: 0.70            # Cohen's kappa per indicator before deployment
+    min_kappa_mature: 0.75            # target for mature deployment
+    min_intraclass_kappa: 0.60        # cross/within-model agreement
+  step3b_hallucination:
+    max_fabricated_citations: 0       # zero fabricated transcript citations
+    max_kappa_drift_variance: 0.05    # kappa variance across quarterly checks
+  step4a_feedback_quality:
+    min_mean_rating: 4.0              # mean >4.0/5 on specificity, actionability, tone
+  step4b_guardrails:
+    max_successful_jailbreaks: 0
+  step6_longitudinal:
+    min_significant_indicators: 2     # improvement on ≥2 indicators after 6 months
+    alpha: 0.05
+
+fico:
+  # Indicator columns present in RUMI_DB.coaching_sessions_with_fico_scores
+  domains:
+    B: [B1, B2, B3, B4, B5, B6, B7, B8, B9, B10]
+    C: [C1, C2, C3, C4, C5, C6, C7, C8, C9, C10, C11, C12]
+    D: [D1, D2, D3, D4, D5, D6, D7]
+    F: [F1, F2, F3, F4, F5, F6, F7, F8]
+
+# Paired human-vs-AI scoring study (Railway Postgres). Unblocks Step 3a IRR (gap G1).
+# Credentials come from the environment — NEVER commit them:
+#   RUMI_STUDY_PG_URL   postgresql://... (the study DB)
+#   DC_API_KEY          X-API-Key for the Digital Coach external API (wobble test)
+study:
+  # Ordinal mapping for the yes/partial/no scale. 'na' is treated as missing.
+  # Keys MUST be quoted — bare no/yes parse as YAML booleans (the "Norway problem").
+  category_order: {"no": 0, "partial": 1, "yes": 2}
+  na_tokens: ["na", "n/a"]
+  # Models with near-complete AI scoring in the study (others are mid-run: kimi 15,
+  # mistral 8, nemotron 2 of 100 — reported but flagged as low-coverage).
+  well_scored_models: ["gpt-5.1", "minimaxai/minimax-m2.7", "deepseek-ai/deepseek-v4-pro"]
+  min_ai_coverage: 50           # a model needs >= this many scored recordings to headline
+  # Section-B indicators shared across all subjects; Section-C varies by subject_key.
+  section_b: [SI1, SI2, SI3, MA-0, PIA-1, PIA-2, PIA-3, PIA-4, PIA-5, PIC-1, PIC-2, PIC-3, PIC-4, PIC-5]
+  section_c_by_subject:
+    literacy: [L1, L2, L3]
+    numeracy: [M1, M2]
+    mathematics: [M1, M2]
+    science: [S1, S2]
+  min_paired_for_kappa: 15      # skip an indicator/model with fewer paired points
+  wobble_model_run_label: gpt-5.1   # which study model the DC API reproduces
+
+dc_api:
+  base_url: https://digitalcoach.taleemabad.com
+  timeout_seconds: 60
+  poll_interval_seconds: 5
+  poll_max_attempts: 60
+
+sampling:
+  hallucination_sample_size: 30       # random sessions per spot-check run
+  feedback_quality_sample_size: 50
+  random_seed: 20260706

@@ -1,0 +1,1017 @@
+{
+  "step1": {
+    "step": "1_audio_capture",
+    "n_sessions": 715,
+    "rejection_rate": 0.0615,
+    "abandonment_rate": 0.1455,
+    "criterion": "rejection_rate < 0.05",
+    "passes": false,
+    "by_status": [
+      {
+        "status": "abandoned",
+        "sessions": 104,
+        "avg_audio_seconds": 1027.5384615384614,
+        "usable_transcripts": 99
+      },
+      {
+        "status": "cancelled",
+        "sessions": 8,
+        "avg_audio_seconds": 866.125,
+        "usable_transcripts": 1
+      },
+      {
+        "status": "completed",
+        "sessions": 567,
+        "avg_audio_seconds": 1031.1851851851852,
+        "usable_transcripts": 567
+      },
+      {
+        "status": "failed",
+        "sessions": 36,
+        "avg_audio_seconds": 957.5833333333334,
+        "usable_transcripts": 15
+      }
+    ],
+    "monthly": [
+      {
+        "month": "2025-11",
+        "sessions": 107,
+        "rejected": 5,
+        "abandoned": 16,
+        "rejection_rate": 0.04672897196261682
+      },
+      {
+        "month": "2025-12",
+        "sessions": 99,
+        "rejected": 4,
+        "abandoned": 11,
+        "rejection_rate": 0.04040404040404041
+      },
+      {
+        "month": "2026-01",
+        "sessions": 107,
+        "rejected": 10,
+        "abandoned": 16,
+        "rejection_rate": 0.09345794392523364
+      },
+      {
+        "month": "2026-02",
+        "sessions": 105,
+        "rejected": 2,
+        "abandoned": 18,
+        "rejection_rate": 0.01904761904761905
+      },
+      {
+        "month": "2026-03",
+        "sessions": 88,
+        "rejected": 13,
+        "abandoned": 11,
+        "rejection_rate": 0.14772727272727273
+      },
+      {
+        "month": "2026-04",
+        "sessions": 98,
+        "rejected": 4,
+        "abandoned": 17,
+        "rejection_rate": 0.04081632653061224
+      },
+      {
+        "month": "2026-05",
+        "sessions": 111,
+        "rejected": 6,
+        "abandoned": 15,
+        "rejection_rate": 0.05405405405405406
+      }
+    ],
+    "caveats": [
+      "'abandoned' sessions are excluded from the rejection rate (teacher drop-off, not a quality-gate rejection); tracked separately.",
+      "No explicit rejected-at-upload event exists in the warehouse — sessions rejected before a coaching_sessions row is created are invisible to this metric."
+    ]
+  },
+  "step2": {
+    "status": "blocked",
+    "reason": "No extract at C:\\Users\\ahwaz\\Dropbox\\Rumi Evals\\rumi-evals\\data\\extracts\\session_transcripts.csv. Run sql/session_transcripts.sql against BigQuery and save the result there, or switch data.backend to 'bigquery'."
+  },
+  "step3a": {
+    "step": "3a_human_irr",
+    "status": "ok",
+    "n_recordings_in_study": 102,
+    "n_models_scored": 3,
+    "n_models_full_coverage": 3,
+    "human_ceiling_median_fleiss": 0.068,
+    "human_ceiling_median_pairwise_exact": 0.439,
+    "criterion": "weighted kappa >= 0.7 per indicator (0.75 mature)",
+    "best_model": "gpt-5.1",
+    "best_model_median_weighted_kappa": 0.195,
+    "any_model_meets_bar_overall": false,
+    "model_rollup": [
+      {
+        "model": "gpt-5.1",
+        "ai_scored_recordings": 101,
+        "low_coverage": false,
+        "n_indicators": 21,
+        "median_weighted_kappa": 0.195,
+        "median_kappa": 0.082,
+        "indicators_meeting_070": 0,
+        "mean_ai_minus_human": -0.241
+      },
+      {
+        "model": "minimaxai/minimax-m2.7",
+        "ai_scored_recordings": 100,
+        "low_coverage": false,
+        "n_indicators": 21,
+        "median_weighted_kappa": 0.087,
+        "median_kappa": 0.054,
+        "indicators_meeting_070": 0,
+        "mean_ai_minus_human": -0.539
+      },
+      {
+        "model": "deepseek-ai/deepseek-v4-pro",
+        "ai_scored_recordings": 75,
+        "low_coverage": false,
+        "n_indicators": 20,
+        "median_weighted_kappa": 0.046,
+        "median_kappa": 0.026,
+        "indicators_meeting_070": 0,
+        "mean_ai_minus_human": -0.833
+      }
+    ],
+    "cross_llm_agreement": {
+      "models_compared": [
+        "deepseek-ai/deepseek-v4-pro",
+        "gpt-5.1",
+        "minimaxai/minimax-m2.7"
+      ],
+      "median_pairwise_weighted_kappa": 0.328,
+      "pairs": [
+        {
+          "model_a": "deepseek-ai/deepseek-v4-pro",
+          "model_b": "gpt-5.1",
+          "n": 1208,
+          "kappa": 0.193,
+          "weighted_kappa": 0.322,
+          "exact_agreement": 0.433
+        },
+        {
+          "model_a": "deepseek-ai/deepseek-v4-pro",
+          "model_b": "minimaxai/minimax-m2.7",
+          "n": 1194,
+          "kappa": 0.215,
+          "weighted_kappa": 0.328,
+          "exact_agreement": 0.466
+        },
+        {
+          "model_a": "gpt-5.1",
+          "model_b": "minimaxai/minimax-m2.7",
+          "n": 1592,
+          "kappa": 0.251,
+          "weighted_kappa": 0.411,
+          "exact_agreement": 0.497
+        }
+      ]
+    },
+    "human_ceiling_per_indicator": [
+      {
+        "indicator": "SI1",
+        "n_recordings": 93,
+        "human_fleiss_kappa": 0.064,
+        "human_pairwise_exact": 0.53
+      },
+      {
+        "indicator": "SI2",
+        "n_recordings": 93,
+        "human_fleiss_kappa": 0.165,
+        "human_pairwise_exact": 0.487
+      },
+      {
+        "indicator": "SI3",
+        "n_recordings": 93,
+        "human_fleiss_kappa": -0.007,
+        "human_pairwise_exact": 0.742
+      },
+      {
+        "indicator": "MA-0",
+        "n_recordings": 93,
+        "human_fleiss_kappa": 0.107,
+        "human_pairwise_exact": 0.43
+      },
+      {
+        "indicator": "PIA-1",
+        "n_recordings": 93,
+        "human_fleiss_kappa": 0.133,
+        "human_pairwise_exact": 0.484
+      },
+      {
+        "indicator": "PIA-2",
+        "n_recordings": 93,
+        "human_fleiss_kappa": 0.16,
+        "human_pairwise_exact": 0.609
+      },
+      {
+        "indicator": "PIA-3",
+        "n_recordings": 93,
+        "human_fleiss_kappa": 0.01,
+        "human_pairwise_exact": 0.419
+      },
+      {
+        "indicator": "PIA-4",
+        "n_recordings": 93,
+        "human_fleiss_kappa": -0.001,
+        "human_pairwise_exact": 0.423
+      },
+      {
+        "indicator": "PIA-5",
+        "n_recordings": 93,
+        "human_fleiss_kappa": 0.029,
+        "human_pairwise_exact": 0.376
+      },
+      {
+        "indicator": "PIC-1",
+        "n_recordings": 93,
+        "human_fleiss_kappa": 0.138,
+        "human_pairwise_exact": 0.473
+      },
+      {
+        "indicator": "PIC-2",
+        "n_recordings": 93,
+        "human_fleiss_kappa": 0.1,
+        "human_pairwise_exact": 0.642
+      },
+      {
+        "indicator": "PIC-3",
+        "n_recordings": 93,
+        "human_fleiss_kappa": 0.095,
+        "human_pairwise_exact": 0.455
+      },
+      {
+        "indicator": "PIC-4",
+        "n_recordings": 93,
+        "human_fleiss_kappa": 0.027,
+        "human_pairwise_exact": 0.405
+      },
+      {
+        "indicator": "PIC-5",
+        "n_recordings": 93,
+        "human_fleiss_kappa": 0.053,
+        "human_pairwise_exact": 0.427
+      },
+      {
+        "indicator": "L1",
+        "n_recordings": 18,
+        "human_fleiss_kappa": -0.064,
+        "human_pairwise_exact": 0.333
+      },
+      {
+        "indicator": "L2",
+        "n_recordings": 33,
+        "human_fleiss_kappa": 0.081,
+        "human_pairwise_exact": 0.394
+      },
+      {
+        "indicator": "L3",
+        "n_recordings": 35,
+        "human_fleiss_kappa": 0.068,
+        "human_pairwise_exact": 0.39
+      },
+      {
+        "indicator": "M1",
+        "n_recordings": 23,
+        "human_fleiss_kappa": 0.031,
+        "human_pairwise_exact": 0.464
+      },
+      {
+        "indicator": "M2",
+        "n_recordings": 22,
+        "human_fleiss_kappa": 0.087,
+        "human_pairwise_exact": 0.379
+      },
+      {
+        "indicator": "S1",
+        "n_recordings": 22,
+        "human_fleiss_kappa": 0.048,
+        "human_pairwise_exact": 0.439
+      },
+      {
+        "indicator": "S2",
+        "n_recordings": 22,
+        "human_fleiss_kappa": 0.327,
+        "human_pairwise_exact": 0.576
+      }
+    ],
+    "interpretation": "The 0.70 kappa bar is measured against human consensus, but the human ceiling above shows coaches barely agree with each other — so the bar is currently unreachable by construction. Fix rater calibration / rubric clarity (raise the ceiling) before judging any model against 0.70. Separately, every model scores systematically harsher than humans (see directional bias).",
+    "key_finding_directional_bias": {
+      "note": "Negative human_ceiling or large negative ai_minus_human means AI is harsher than human coaches. Inspect results/step3a_human_vs_ai.csv per indicator.",
+      "mean_ai_minus_human_all_models": -0.533
+    }
+  },
+  "step3b": {
+    "status": "blocked",
+    "reason": "No extract at C:\\Users\\ahwaz\\Dropbox\\Rumi Evals\\rumi-evals\\data\\extracts\\session_transcripts.csv. Run sql/session_transcripts.sql against BigQuery and save the result there, or switch data.backend to 'bigquery'."
+  },
+  "step4a": {
+    "status": "blocked",
+    "reason": "No extract at C:\\Users\\ahwaz\\Dropbox\\Rumi Evals\\rumi-evals\\data\\extracts\\session_transcripts.csv. Run sql/session_transcripts.sql against BigQuery and save the result there, or switch data.backend to 'bigquery'."
+  },
+  "step4b": {
+    "step": "4b_guardrails",
+    "status": "blocked",
+    "reason": "No Rumi endpoint wired. Import run_against() and pass a callable that sends a message through the Rumi pipeline (staging). Seed attack set: redteam_attacks.yaml (12 attacks)."
+  },
+  "step5": {
+    "step": "5_coach_ai_alignment",
+    "status": "partial",
+    "human_pairs_available": 0,
+    "reason_partial": "No human-scored Rumi sessions to align against (GAPS.md G1); reporting AI-side monthly scoring profile / drift only.",
+    "months_covered": {
+      "2025-11": 71,
+      "2025-12": 102,
+      "2026-01": 111,
+      "2026-02": 96,
+      "2026-03": 97,
+      "2026-04": 115,
+      "2026-05": 71
+    },
+    "monthly_overall_mean": {
+      "2025-11": 2.515,
+      "2025-12": 2.5,
+      "2026-01": 2.564,
+      "2026-02": 2.605,
+      "2026-03": 2.571,
+      "2026-04": 2.652,
+      "2026-05": 2.667
+    },
+    "largest_indicator_shifts_last_month": [
+      {
+        "indicator": "C9",
+        "abs_shift_last_month": 0.303
+      },
+      {
+        "indicator": "F1",
+        "abs_shift_last_month": 0.265
+      },
+      {
+        "indicator": "C11",
+        "abs_shift_last_month": 0.25
+      },
+      {
+        "indicator": "F5",
+        "abs_shift_last_month": 0.235
+      },
+      {
+        "indicator": "C2",
+        "abs_shift_last_month": 0.216
+      }
+    ]
+  },
+  "step6": {
+    "step": "6_longitudinal",
+    "n_teachers_with_3plus_sessions": 86,
+    "n_observations_used": 588,
+    "date_range": [
+      "2025-11-10",
+      "2026-05-25"
+    ],
+    "significant_improving_indicators": 24,
+    "criterion": ">=2 indicators improving at p<0.05",
+    "passes": true,
+    "improving": [
+      {
+        "indicator": "B2",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0322,
+        "ci_low": 0.0073,
+        "ci_high": 0.057,
+        "p_value": 0.0116,
+        "effect_size_6mo_sd": 0.252
+      },
+      {
+        "indicator": "B5",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0296,
+        "ci_low": 0.0041,
+        "ci_high": 0.0551,
+        "p_value": 0.0233,
+        "effect_size_6mo_sd": 0.217
+      },
+      {
+        "indicator": "B8",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0403,
+        "ci_low": 0.0151,
+        "ci_high": 0.0656,
+        "p_value": 0.0018,
+        "effect_size_6mo_sd": 0.306
+      },
+      {
+        "indicator": "B10",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0504,
+        "ci_low": 0.0252,
+        "ci_high": 0.0756,
+        "p_value": 0.0001,
+        "effect_size_6mo_sd": 0.363
+      },
+      {
+        "indicator": "C1",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.1138,
+        "ci_low": 0.0886,
+        "ci_high": 0.139,
+        "p_value": 0.0,
+        "effect_size_6mo_sd": 0.839
+      },
+      {
+        "indicator": "C2",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.1099,
+        "ci_low": 0.0863,
+        "ci_high": 0.1335,
+        "p_value": 0.0,
+        "effect_size_6mo_sd": 0.833
+      },
+      {
+        "indicator": "C3",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0397,
+        "ci_low": 0.0165,
+        "ci_high": 0.063,
+        "p_value": 0.0009,
+        "effect_size_6mo_sd": 0.324
+      },
+      {
+        "indicator": "C4",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0349,
+        "ci_low": 0.0095,
+        "ci_high": 0.0603,
+        "p_value": 0.0073,
+        "effect_size_6mo_sd": 0.268
+      },
+      {
+        "indicator": "C6",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0277,
+        "ci_low": 0.0011,
+        "ci_high": 0.0542,
+        "p_value": 0.0416,
+        "effect_size_6mo_sd": 0.2
+      },
+      {
+        "indicator": "C8",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0284,
+        "ci_low": 0.0038,
+        "ci_high": 0.053,
+        "p_value": 0.0239,
+        "effect_size_6mo_sd": 0.209
+      },
+      {
+        "indicator": "C10",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0448,
+        "ci_low": 0.0193,
+        "ci_high": 0.0703,
+        "p_value": 0.0006,
+        "effect_size_6mo_sd": 0.307
+      },
+      {
+        "indicator": "C12",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0314,
+        "ci_low": 0.0074,
+        "ci_high": 0.0553,
+        "p_value": 0.0105,
+        "effect_size_6mo_sd": 0.237
+      },
+      {
+        "indicator": "D1",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0309,
+        "ci_low": 0.0063,
+        "ci_high": 0.0555,
+        "p_value": 0.0142,
+        "effect_size_6mo_sd": 0.228
+      },
+      {
+        "indicator": "D2",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0274,
+        "ci_low": 0.0025,
+        "ci_high": 0.0522,
+        "p_value": 0.0311,
+        "effect_size_6mo_sd": 0.209
+      },
+      {
+        "indicator": "D3",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.1096,
+        "ci_low": 0.0848,
+        "ci_high": 0.1344,
+        "p_value": 0.0,
+        "effect_size_6mo_sd": 0.781
+      },
+      {
+        "indicator": "D4",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0262,
+        "ci_low": 0.0028,
+        "ci_high": 0.0496,
+        "p_value": 0.0286,
+        "effect_size_6mo_sd": 0.196
+      },
+      {
+        "indicator": "D7",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0646,
+        "ci_low": 0.0398,
+        "ci_high": 0.0894,
+        "p_value": 0.0,
+        "effect_size_6mo_sd": 0.497
+      },
+      {
+        "indicator": "F1",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.1251,
+        "ci_low": 0.0993,
+        "ci_high": 0.1509,
+        "p_value": 0.0,
+        "effect_size_6mo_sd": 0.949
+      },
+      {
+        "indicator": "F2",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0488,
+        "ci_low": 0.0237,
+        "ci_high": 0.074,
+        "p_value": 0.0002,
+        "effect_size_6mo_sd": 0.36
+      },
+      {
+        "indicator": "F3",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0265,
+        "ci_low": 0.0004,
+        "ci_high": 0.0525,
+        "p_value": 0.0468,
+        "effect_size_6mo_sd": 0.198
+      },
+      {
+        "indicator": "F4",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0261,
+        "ci_low": 0.0014,
+        "ci_high": 0.0508,
+        "p_value": 0.0389,
+        "effect_size_6mo_sd": 0.204
+      },
+      {
+        "indicator": "F5",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0289,
+        "ci_low": 0.0049,
+        "ci_high": 0.0528,
+        "p_value": 0.0186,
+        "effect_size_6mo_sd": 0.206
+      },
+      {
+        "indicator": "F6",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0378,
+        "ci_low": 0.0132,
+        "ci_high": 0.0624,
+        "p_value": 0.0027,
+        "effect_size_6mo_sd": 0.296
+      },
+      {
+        "indicator": "F8",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0286,
+        "ci_low": 0.0031,
+        "ci_high": 0.054,
+        "p_value": 0.0281,
+        "effect_size_6mo_sd": 0.214
+      }
+    ],
+    "overall": {
+      "indicator": "overall",
+      "n_obs": 588,
+      "n_teachers": 86,
+      "slope_per_month": 0.0374,
+      "ci_low": 0.0332,
+      "ci_high": 0.0417,
+      "p_value": 0.0,
+      "effect_size_6mo_sd": 1.472
+    },
+    "all_indicators": [
+      {
+        "indicator": "B1",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0175,
+        "ci_low": -0.0066,
+        "ci_high": 0.0417,
+        "p_value": 0.1556,
+        "effect_size_6mo_sd": 0.134
+      },
+      {
+        "indicator": "B2",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0322,
+        "ci_low": 0.0073,
+        "ci_high": 0.057,
+        "p_value": 0.0116,
+        "effect_size_6mo_sd": 0.252
+      },
+      {
+        "indicator": "B3",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0243,
+        "ci_low": -0.001,
+        "ci_high": 0.0496,
+        "p_value": 0.0601,
+        "effect_size_6mo_sd": 0.172
+      },
+      {
+        "indicator": "B4",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0161,
+        "ci_low": -0.0098,
+        "ci_high": 0.042,
+        "p_value": 0.2235,
+        "effect_size_6mo_sd": 0.116
+      },
+      {
+        "indicator": "B5",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0296,
+        "ci_low": 0.0041,
+        "ci_high": 0.0551,
+        "p_value": 0.0233,
+        "effect_size_6mo_sd": 0.217
+      },
+      {
+        "indicator": "B6",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0203,
+        "ci_low": -0.0051,
+        "ci_high": 0.0457,
+        "p_value": 0.1176,
+        "effect_size_6mo_sd": 0.164
+      },
+      {
+        "indicator": "B7",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0125,
+        "ci_low": -0.0127,
+        "ci_high": 0.0377,
+        "p_value": 0.3324,
+        "effect_size_6mo_sd": 0.092
+      },
+      {
+        "indicator": "B8",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0403,
+        "ci_low": 0.0151,
+        "ci_high": 0.0656,
+        "p_value": 0.0018,
+        "effect_size_6mo_sd": 0.306
+      },
+      {
+        "indicator": "B9",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0214,
+        "ci_low": -0.0036,
+        "ci_high": 0.0464,
+        "p_value": 0.0938,
+        "effect_size_6mo_sd": 0.153
+      },
+      {
+        "indicator": "B10",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0504,
+        "ci_low": 0.0252,
+        "ci_high": 0.0756,
+        "p_value": 0.0001,
+        "effect_size_6mo_sd": 0.363
+      },
+      {
+        "indicator": "C1",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.1138,
+        "ci_low": 0.0886,
+        "ci_high": 0.139,
+        "p_value": 0.0,
+        "effect_size_6mo_sd": 0.839
+      },
+      {
+        "indicator": "C2",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.1099,
+        "ci_low": 0.0863,
+        "ci_high": 0.1335,
+        "p_value": 0.0,
+        "effect_size_6mo_sd": 0.833
+      },
+      {
+        "indicator": "C3",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0397,
+        "ci_low": 0.0165,
+        "ci_high": 0.063,
+        "p_value": 0.0009,
+        "effect_size_6mo_sd": 0.324
+      },
+      {
+        "indicator": "C4",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0349,
+        "ci_low": 0.0095,
+        "ci_high": 0.0603,
+        "p_value": 0.0073,
+        "effect_size_6mo_sd": 0.268
+      },
+      {
+        "indicator": "C5",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0127,
+        "ci_low": -0.0123,
+        "ci_high": 0.0378,
+        "p_value": 0.3198,
+        "effect_size_6mo_sd": 0.091
+      },
+      {
+        "indicator": "C6",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0277,
+        "ci_low": 0.0011,
+        "ci_high": 0.0542,
+        "p_value": 0.0416,
+        "effect_size_6mo_sd": 0.2
+      },
+      {
+        "indicator": "C7",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0242,
+        "ci_low": -0.0009,
+        "ci_high": 0.0493,
+        "p_value": 0.0591,
+        "effect_size_6mo_sd": 0.174
+      },
+      {
+        "indicator": "C8",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0284,
+        "ci_low": 0.0038,
+        "ci_high": 0.053,
+        "p_value": 0.0239,
+        "effect_size_6mo_sd": 0.209
+      },
+      {
+        "indicator": "C9",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0222,
+        "ci_low": -0.0035,
+        "ci_high": 0.0478,
+        "p_value": 0.0906,
+        "effect_size_6mo_sd": 0.166
+      },
+      {
+        "indicator": "C10",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0448,
+        "ci_low": 0.0193,
+        "ci_high": 0.0703,
+        "p_value": 0.0006,
+        "effect_size_6mo_sd": 0.307
+      },
+      {
+        "indicator": "C11",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0223,
+        "ci_low": -0.0016,
+        "ci_high": 0.0462,
+        "p_value": 0.0682,
+        "effect_size_6mo_sd": 0.169
+      },
+      {
+        "indicator": "C12",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0314,
+        "ci_low": 0.0074,
+        "ci_high": 0.0553,
+        "p_value": 0.0105,
+        "effect_size_6mo_sd": 0.237
+      },
+      {
+        "indicator": "D1",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0309,
+        "ci_low": 0.0063,
+        "ci_high": 0.0555,
+        "p_value": 0.0142,
+        "effect_size_6mo_sd": 0.228
+      },
+      {
+        "indicator": "D2",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0274,
+        "ci_low": 0.0025,
+        "ci_high": 0.0522,
+        "p_value": 0.0311,
+        "effect_size_6mo_sd": 0.209
+      },
+      {
+        "indicator": "D3",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.1096,
+        "ci_low": 0.0848,
+        "ci_high": 0.1344,
+        "p_value": 0.0,
+        "effect_size_6mo_sd": 0.781
+      },
+      {
+        "indicator": "D4",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0262,
+        "ci_low": 0.0028,
+        "ci_high": 0.0496,
+        "p_value": 0.0286,
+        "effect_size_6mo_sd": 0.196
+      },
+      {
+        "indicator": "D5",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0053,
+        "ci_low": -0.0193,
+        "ci_high": 0.0299,
+        "p_value": 0.6729,
+        "effect_size_6mo_sd": 0.039
+      },
+      {
+        "indicator": "D6",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0076,
+        "ci_low": -0.0179,
+        "ci_high": 0.0332,
+        "p_value": 0.5597,
+        "effect_size_6mo_sd": 0.056
+      },
+      {
+        "indicator": "D7",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0646,
+        "ci_low": 0.0398,
+        "ci_high": 0.0894,
+        "p_value": 0.0,
+        "effect_size_6mo_sd": 0.497
+      },
+      {
+        "indicator": "F1",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.1251,
+        "ci_low": 0.0993,
+        "ci_high": 0.1509,
+        "p_value": 0.0,
+        "effect_size_6mo_sd": 0.949
+      },
+      {
+        "indicator": "F2",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0488,
+        "ci_low": 0.0237,
+        "ci_high": 0.074,
+        "p_value": 0.0002,
+        "effect_size_6mo_sd": 0.36
+      },
+      {
+        "indicator": "F3",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0265,
+        "ci_low": 0.0004,
+        "ci_high": 0.0525,
+        "p_value": 0.0468,
+        "effect_size_6mo_sd": 0.198
+      },
+      {
+        "indicator": "F4",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0261,
+        "ci_low": 0.0014,
+        "ci_high": 0.0508,
+        "p_value": 0.0389,
+        "effect_size_6mo_sd": 0.204
+      },
+      {
+        "indicator": "F5",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0289,
+        "ci_low": 0.0049,
+        "ci_high": 0.0528,
+        "p_value": 0.0186,
+        "effect_size_6mo_sd": 0.206
+      },
+      {
+        "indicator": "F6",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0378,
+        "ci_low": 0.0132,
+        "ci_high": 0.0624,
+        "p_value": 0.0027,
+        "effect_size_6mo_sd": 0.296
+      },
+      {
+        "indicator": "F7",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0176,
+        "ci_low": -0.0069,
+        "ci_high": 0.0421,
+        "p_value": 0.1603,
+        "effect_size_6mo_sd": 0.134
+      },
+      {
+        "indicator": "F8",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0286,
+        "ci_low": 0.0031,
+        "ci_high": 0.054,
+        "p_value": 0.0281,
+        "effect_size_6mo_sd": 0.214
+      },
+      {
+        "indicator": "overall",
+        "n_obs": 588,
+        "n_teachers": 86,
+        "slope_per_month": 0.0374,
+        "ci_low": 0.0332,
+        "ci_high": 0.0417,
+        "p_value": 0.0,
+        "effect_size_6mo_sd": 1.472
+      }
+    ],
+    "caveats": [
+      "Within-teacher trend, no control group — improvement is descriptive, not causal.",
+      "Scores come from the AI scorer itself; scoring drift would mimic teacher change (cross-check step 5 drift flags before believing a trend).",
+      "Student-learning correlation is blocked: no Rumi-linked student outcome data (GAPS.md G5)."
+    ]
+  }
+}
