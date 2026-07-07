@@ -459,6 +459,9 @@ def run(backend, cfg: dict) -> dict:
 
     if len(ceiling_ind_kappa):
         ceiling = ceiling.merge(ceiling_ind_kappa, on="indicator", how="left")
+        # indicators with too few coach pairs get no pairwise kappa; keep JSON valid
+        col = ceiling["human_pairwise_kappa"].astype(object)
+        ceiling["human_pairwise_kappa"] = col.where(col.notna(), None)
 
     RESULTS_DIR.mkdir(exist_ok=True)
     ceiling.to_csv(RESULTS_DIR / "step3a_human_ceiling.csv", index=False)

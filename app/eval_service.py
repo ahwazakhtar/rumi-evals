@@ -65,11 +65,11 @@ STEP_META: dict[str, dict] = {
     },
     "3a": {
         "num": "3a", "title": "Rubric scoring reliability",
-        "criterion": "Agreement (weighted kappa) above 0.70 on each indicator before deployment (0.75 at maturity); consistency above 0.6 across AI models.",
-        "measure": "AI and human coaches score the same lessons independently. We report per-indicator agreement between the coaches' consensus and each AI model; how well the coaches agree with one another (the 'human ceiling'); agreement between AI models; and whether the AI scores systematically higher or lower than coaches.",
-        "reads": "The paired scoring study: 300 lessons independently scored by 55 trained coaches and by 6 AI models. Read live, refreshed on demand.",
+        "criterion": "Agreement (weighted kappa) above 0.70 on each indicator before deployment (0.75 at maturity) — always read against how well coaches agree with one another; consistency above 0.6 across AI models.",
+        "measure": "AI and human coaches score the same lessons independently. We report how well coaches agree with one another (the 'human ceiling'); how well each AI agrees with individual coaches, in the same units as that ceiling; a swap-a-rater test — does overall agreement drop if the AI replaces a coach?; whether the AI scores systematically higher or lower than coaches; and agreement between AI models.",
+        "reads": "The paired scoring study (redesigned V2): 100 lessons, each matched to its correct lesson plan and independently scored by 3 trained coaches (from a 55-coach pool) and by the AI models. Read live, refreshed on demand; coach scoring is still in progress.",
         "gap": "G1",
-        "next_action": "Two distinct fixes. (1) Raise the human ceiling first — coach calibration and sharper definitions for the lowest-agreement indicators; a 0.70 target isn't meaningful until coaches agree with one another. (2) Correct the AI's harshness bias — every model scores systematically below coaches, a scoring-calibration fix independent of (1). Report agreement relative to the human ceiling rather than a fixed 0.70. Also complete the partially-scored AI models.",
+        "next_action": "Two distinct fixes. (1) Raise the human ceiling first — coach calibration and sharper definitions for the lowest-agreement indicators; a 0.70 target isn't meaningful until coaches agree with one another. (2) Correct the AI's harshness bias — every model scores systematically below coaches, a scoring-calibration fix independent of (1). Report agreement relative to the human ceiling rather than a fixed 0.70. Also complete the in-progress coach scoring (about half the lessons have their multiple coach scores so far).",
     },
     "3b": {
         "num": "3b", "title": "Fabrication & drift",
@@ -130,7 +130,7 @@ GAPS = [
         "steps": ["3a", "5"],
         "wants": "Agreement (kappa above 0.70 per indicator) between the AI's scores and a trained coach's scores on the same lesson.",
         "reality": "Within the programme's own records, no lesson had been scored by both a human coach and the AI — the existing human observations and the AI sessions came from different programmes and different teachers, with no way to match them lesson-for-lesson.",
-        "resolution": "Resolved by a purpose-built paired scoring study: 300 lessons, each scored by up to 3 trained coaches (55 in total) and by 6 AI models against the same rubric. This gives real per-indicator agreement. The critical finding: the coaches barely agree with each other (median inter-coach reliability near chance), so the 0.70 target is currently unreachable by construction. Two issues follow — raise the human agreement ceiling through coach calibration, and correct the AI's tendency to score more harshly than coaches.",
+        "resolution": "Resolved by a purpose-built paired scoring study, redesigned as V2 after a first round surfaced data-quality issues: 100 lessons, each verified against its correct lesson plan, restricted to in-scope subjects, and scored by 3 trained coaches (from a 55-coach pool) plus the AI models against the same rubric. This gives real per-indicator agreement. The critical finding stands: coaches agree with each other only weakly, so the 0.70 target is currently unreachable by construction. Two issues follow — raise the human agreement ceiling through coach calibration, and correct the AI's tendency to score more harshly than coaches.",
     },
     {
         "id": "G2", "title": "No reference transcripts", "status": "blocked",
@@ -177,12 +177,12 @@ DATA_SOURCES = [
     {
         "name": "Paired scoring study",
         "backend": "Study database",
-        "role": "A purpose-built study created to answer the core reliability question. 300 lessons, each scored by up to 3 trained coaches and by 6 AI models against the same rubric.",
+        "role": "A purpose-built study created to answer the core reliability question. Redesigned (V2): 100 lessons, each verified against its correct lesson plan and scored by 3 trained coaches plus the AI models against the same rubric.",
         "feeds": ["3a"],
         "notes": [
-            "Uses the coaches' own classroom-observation rubric.",
+            "Uses the coaches' own classroom-observation rubric, restricted to in-scope subjects (literacy, mathematics, science).",
             "This is the only source read live in this dashboard; Step 3a refreshes from it on demand.",
-            "Two models are fully scored (about 100 lessons each), one is roughly three-quarters done, and three are still in progress.",
+            "Coach scoring is in progress: about half the lessons have two or more coach scores so far. Two AI models are fully scored, one is about three-quarters done.",
         ],
     },
     {
@@ -205,11 +205,15 @@ STATUS_LABEL = {"pass": "PASS", "partial": "PARTIAL", "fail": "FAIL", "blocked":
 # ---------------------------------------------------------------------------
 GLOSSARY: dict[str, list[dict]] = {
     "3a": [
-        {"term": "Kappa (κ)", "gloss": "Agreement adjusted for chance — 0 means no better than random guessing, 1 means perfect. The framework's target is above 0.70; below about 0.2 is very weak."},
-        {"term": "Weighted kappa (wκ)", "gloss": "The same 0–1 agreement measure, but it gives partial credit when two scores are close (e.g. “yes” vs “partial”) rather than counting every mismatch as total disagreement."},
-        {"term": "Human ceiling (Fleiss κ)", "gloss": "Kappa measured among the coaches themselves — how consistently different coaches score the same lesson. It caps how high any AI's agreement can realistically go."},
-        {"term": "Exact / adjacent agreement", "gloss": "The share of scores that match exactly, or are at most one category apart (e.g. “yes” vs “partial”)."},
+        {"term": "Agreement score (kappa, κ)", "gloss": "Agreement adjusted for chance — 0 means no better than random guessing, 1 means perfect. The framework's target is above 0.70; below about 0.2 is very weak."},
+        {"term": "Weighted kappa (wκ)", "gloss": "The same 0–1 agreement score, but a near-miss (“yes” vs “partial”) counts as half a disagreement instead of a full one. All weighted numbers on this page use this half-credit (linear) rule."},
+        {"term": "Human ceiling", "gloss": "How well two coaches agree with each other when scoring the same lesson, measured with the same agreement score used for the AI. No AI can be expected to agree with coaches better than coaches agree among themselves — so every AI number should be read against this, not against 0.70."},
+        {"term": "% of ceiling", "gloss": "The AI's agreement with individual coaches divided by the coaches' agreement with each other. 100% means the AI fits in like one more coach."},
+        {"term": "Swap-a-rater test", "gloss": "We measure the group's overall scoring consistency with the three coaches, then again with the AI added as a fourth rater. If consistency doesn't drop, the AI is statistically indistinguishable from a coach. (Statistic: Krippendorff's alpha.)"},
+        {"term": "Vs individual coaches / vs consensus", "gloss": "Two ways to compare the AI to humans. Against each coach one-by-one is the honest one; against the coaches' combined (majority) answer always looks better, because combining smooths out coach disagreement. We show both."},
+        {"term": "Score skew", "gloss": "When nearly every answer on an indicator is “yes”, the chance-adjusted agreement score can look near zero even though raters match most of the time. Where you see a very low score, check the skew columns before concluding raters truly disagree."},
         {"term": "AI − human", "gloss": "The average gap between the AI's score and the coaches' on the 3-point scale. Negative means the AI scores harsher; −1 is roughly a full category lower."},
+        {"term": "Plausible range (95% CI)", "gloss": "The range the true value plausibly sits in given how much data exists so far. Ranges shrink as more coach scoring comes in."},
     ],
     "5": [
         {"term": "Scoring drift", "gloss": "A gradual shift in the AI's own scoring over time that isn't explained by a change to the rubric — worth watching, but not by itself evidence that teaching changed."},
@@ -252,9 +256,19 @@ def _headline(step_id: str, res: dict | None, status: str) -> str:
     if step_id == "2":
         return "Pending — needs hand-verified reference transcripts to measure accuracy against (see gap G2)."
     if step_id == "3a":
+        pooled = res.get("dc_vs_each_coach_pooled_by_model", {}).get("by_model", {})
+        full = {m: d for m, d in pooled.items() if not d.get("low_coverage") and d.get("pct_of_human_ceiling")}
+        if full:
+            best_m = max(full, key=lambda m: full[m]["pct_of_human_ceiling"])
+            pct = full[best_m]["pct_of_human_ceiling"] * 100
+            ex = res.get("exchangeability_delta_alpha", {}).get("by_model", [])
+            n_pass = sum(1 for e in ex if e.get("exchangeable"))
+            return (f"The best AI ({best_m.split('/')[-1]}) agrees with individual coaches at {pct:.0f}% of the "
+                    f"level coaches agree with each other; {n_pass} of {len(ex)} fully-scored models pass the "
+                    f"swap-a-rater test. The 0.70 bar stays unreachable while coach-vs-coach agreement itself "
+                    f"is this low.")
         return (f"Best model {res['best_model']} median weighted κ = {res['best_model_median_weighted_kappa']} "
-                f"vs a 0.70 bar — but the human ceiling is only Fleiss κ = {res['human_ceiling_median_fleiss']}, "
-                f"so the bar is unreachable by construction.")
+                f"vs a 0.70 bar — but the human ceiling is far lower, so the bar is unreachable by construction.")
     if step_id == "3b":
         return "Pending — needs a batch of completed lessons (transcript plus AI analysis) to review."
     if step_id == "4a":
@@ -457,108 +471,207 @@ class EvalService:
         if not res or res.get("status") != "ok":
             self._build_blocked(view, res)
             return
-        view["interpretation"] = res.get("interpretation")
         bias = res.get("key_finding_directional_bias", {}).get("mean_ai_minus_human_all_models")
         rollup = res.get("model_rollup", [])
         cross = res.get("cross_llm_agreement", {})
         ceiling = res.get("human_ceiling_per_indicator", [])
+        pair_ceiling = res.get("human_ceiling_pairwise_kappa", {})
+        ceil_k = pair_ceiling.get("weighted_kappa")
+        ceil_ci = pair_ceiling.get("kappa_ci95") or [None, None]
+        pooled = res.get("dc_vs_each_coach_pooled_by_model", {}).get("by_model", {})
+        full_pooled = {m: d for m, d in pooled.items()
+                       if not d.get("low_coverage") and d.get("weighted_kappa") is not None}
+        exchange = res.get("exchangeability_delta_alpha", {}).get("by_model", [])
+        na = res.get("na_applicability_agreement", {})
 
-        view["stats"] = [
-            {"label": "Human ceiling (Fleiss κ)", "value": f"{res['human_ceiling_median_fleiss']:.3f}",
-             "sub": "coaches vs each other — near chance", "tone": "critical"},
-            {"label": "Human pairwise exact", "value": f"{res['human_ceiling_median_pairwise_exact']:.2f}",
-             "sub": "median across indicators", "tone": "muted"},
-            {"label": f"Best model ({res['best_model']}) wκ", "value": f"{res['best_model_median_weighted_kappa']:.3f}",
-             "sub": "vs 0.70 deploy bar", "tone": "warning"},
-            {"label": "Indicators clearing 0.70", "value": "0 / 21",
-             "sub": "across all models", "tone": "critical"},
-            {"label": "Cross-LLM median wκ", "value": f"{cross.get('median_pairwise_weighted_kappa')}",
-             "sub": "models agree more with each other", "tone": "muted"},
-            {"label": "Mean AI − human", "value": f"{bias}",
-             "sub": "AI scores systematically harsher", "tone": "critical"},
-        ]
+        # Curated plain-language interpretation (the pipeline's own string
+        # references internal field names — not for an external reader).
+        view["interpretation"] = (
+            "Read every AI number against the human ceiling — how well coaches agree with each "
+            "other — not against the 0.70 bar. Right now that ceiling is very low, so the bar "
+            "is unreachable for anyone, human or AI. The most meaningful results: the best AI "
+            "already agrees with individual coaches about as well as coaches agree with each "
+            "other, and passes the swap-a-rater test (adding it as a fourth rater doesn't "
+            "reduce the group's consistency). Separately, every AI scores systematically "
+            "harsher than coaches — a calibration issue that agreement scores alone don't fix. "
+            "Coach scoring is still in progress, so these numbers will firm up as more of the "
+            "100 lessons get their full three coach scores."
+        )
 
-        # Chart A — median weighted kappa per model vs ceiling & deploy bar
-        rows_a = [Row(m["model"].split("/")[-1], m["median_weighted_kappa"], color=model_color(m["model"]),
+        stats = []
+        if ceil_k is not None:
+            ci_txt = (f"plausible range {ceil_ci[0]:.2f}–{ceil_ci[1]:.2f}"
+                      if ceil_ci[0] is not None else "coach vs coach, same lesson")
+            stats.append({"label": "Human ceiling — coach vs coach", "value": f"{ceil_k:.2f}",
+                          "sub": f"weighted agreement · {ci_txt}", "tone": "critical"})
+        if full_pooled:
+            best_m = max(full_pooled, key=lambda m: full_pooled[m].get("pct_of_human_ceiling") or 0)
+            bd = full_pooled[best_m]
+            stats.append({"label": f"Best AI vs individual coaches ({best_m.split('/')[-1]})",
+                          "value": f"{bd['weighted_kappa']:.2f}",
+                          "sub": f"{bd['pct_of_human_ceiling'] * 100:.0f}% of the human ceiling",
+                          "tone": "good" if (bd.get("pct_of_human_ceiling") or 0) >= 0.9 else "warning"})
+        if exchange:
+            n_pass = sum(1 for e in exchange if e.get("exchangeable"))
+            stats.append({"label": "Pass the swap-a-rater test", "value": f"{n_pass} of {len(exchange)}",
+                          "sub": "AI added as a 4th rater without hurting consistency",
+                          "tone": "good" if n_pass else "critical"})
+        stats.append({"label": "Indicators clearing 0.70", "value": "0 / 21",
+                      "sub": "across all models — and 0 for coach-vs-coach too", "tone": "critical"})
+        if bias is not None:
+            stats.append({"label": "AI harshness", "value": f"{bias}",
+                          "sub": "average gap below coach scores (0 = none)", "tone": "critical"})
+        if na.get("human_na_rate") is not None:
+            stats.append({"label": "'Not applicable' decisions", "value": f"{na['human_na_rate'] * 100:.1f}%",
+                          "sub": "of coach ratings; agreement on when to use it is weak", "tone": "muted"})
+        view["stats"] = stats
+
+        # Chart A — the headline: each AI vs individual coaches, same units as the ceiling
+        if full_pooled and ceil_k is not None:
+            rows_a = [Row(m.split("/")[-1], d["weighted_kappa"], color=model_color(m),
+                          display=f"{d['weighted_kappa']:.3f}",
+                          sub=f"{(d.get('pct_of_human_ceiling') or 0) * 100:.0f}% of ceiling")
+                      for m, d in sorted(full_pooled.items(),
+                                         key=lambda kv: -(kv[1].get("weighted_kappa") or 0))]
+            chart_a = BarChart(rows_a, vmin=0, vmax=max(0.3, ceil_k + 0.1), decimals=2,
+                               refs=[Ref(ceil_k, "coaches with each other", "var(--warning)")],
+                               label_w=140, chart_w=520)
+            view["charts"].append({
+                "title": "How well each AI agrees with individual coaches — vs how well coaches agree with each other",
+                "svg": chart_a.svg(),
+                "caption": "Like-for-like: the AI bars and the reference line use the same agreement score on the same lessons. "
+                           "An AI at the line fits in like one more coach. Models with too little scored data are excluded.",
+            })
+
+        # Chart B — vs the coaches' combined answer (flattering but familiar view)
+        rows_b = [Row(m["model"].split("/")[-1], m["median_weighted_kappa"], color=model_color(m["model"]),
                       display=f"{m['median_weighted_kappa']:.3f}",
-                      sub=f"{m['ai_scored_recordings']} recs" + (" · low cov" if m["low_coverage"] else ""))
+                      sub=f"{m['ai_scored_recordings']} lessons" + (" · low data" if m["low_coverage"] else ""))
                   for m in rollup]
-        chart_a = BarChart(rows_a, vmin=0, vmax=0.75, decimals=2,
-                           refs=[Ref(res["human_ceiling_median_fleiss"], "human ceiling", "var(--warning)"),
-                                 Ref(0.70, "0.70 deploy bar", "var(--critical)")],
+        chart_b = BarChart(rows_b, vmin=0, vmax=0.75, decimals=2,
+                           refs=([Ref(ceil_k, "coaches with each other", "var(--warning)")] if ceil_k else [])
+                                + [Ref(0.70, "0.70 deploy bar", "var(--critical)")],
                            label_w=140, chart_w=520)
         view["charts"].append({
-            "title": "Median weighted κ per model — against the human ceiling and the 0.70 bar",
-            "svg": chart_a.svg(),
-            "caption": "Every model sits far below 0.70 — but also barely above the human ceiling (0.068). No scorer can agree with a human consensus better than the humans agree among themselves.",
+            "title": "Agreement with the coaches' combined answer — against the 0.70 bar",
+            "svg": chart_b.svg(),
+            "caption": "Every model sits far below 0.70 — but so would a human coach: coach-vs-coach agreement is the orange line. "
+                       "Comparing to the combined (majority) answer also flatters the AI; the first chart is the honest comparison.",
         })
 
-        # Chart B — directional bias (AI - human), diverging
-        rows_b = [Row(m["model"].split("/")[-1], m["mean_ai_minus_human"],
+        # Chart C — directional bias (AI - human), diverging
+        rows_c = [Row(m["model"].split("/")[-1], m["mean_ai_minus_human"],
                       color="var(--critical)" if m["mean_ai_minus_human"] < 0 else "var(--good)",
                       display=f"{m['mean_ai_minus_human']:+.2f}")
                   for m in rollup]
-        chart_b = BarChart(rows_b, vmin=-1.0, vmax=0.2, decimals=1, diverging=True,
+        chart_c = BarChart(rows_c, vmin=-1.0, vmax=0.2, decimals=1, diverging=True,
                            label_w=140, chart_w=520)
         view["charts"].append({
-            "title": "Directional bias — mean (AI − human) on the ordinal scale",
-            "svg": chart_b.svg(),
-            "caption": "All negative: every model scores HARSHER than human coaches (0 = no bias; −1 ≈ a full category harsher). A scoring-prompt calibration issue, separate from the ceiling problem.",
-        })
-
-        # Chart C — per-indicator human ceiling
-        rows_c = [Row(c["indicator"], c["human_fleiss_kappa"],
-                      color="var(--critical)" if c["human_fleiss_kappa"] < 0.05 else "var(--warning)",
-                      display=f"{c['human_fleiss_kappa']:.2f}")
-                  for c in ceiling]
-        chart_c = BarChart(rows_c, vmin=-0.1, vmax=0.4, decimals=2, diverging=True,
-                           refs=[Ref(0.0, "chance", "var(--muted)")],
-                           label_w=70, chart_w=520, bar_h=15, gap=6)
-        view["charts"].append({
-            "title": "Human ceiling by indicator (inter-coach Fleiss κ)",
+            "title": "Harshness — average gap between AI and coach scores",
             "svg": chart_c.svg(),
-            "caption": "The reliability ceiling for each indicator. SI3, PIA-3/4 and L1 sit at or below chance — those definitions need sharpening most. Best-aligned: S2 (0.33), SI2, PIA-2.",
+            "caption": "All negative: every model scores HARSHER than human coaches (0 = no gap; −1 ≈ a full category lower, "
+                       "e.g. 'partial' where coaches say 'yes'). A calibration issue, separate from the agreement question.",
         })
 
-        # Table — model rollup
+        # Chart D — per-indicator coach-vs-coach agreement (same units as model numbers)
+        def _ind_ceiling(c: dict):
+            return c.get("human_pairwise_kappa") if c.get("human_pairwise_kappa") is not None \
+                else c.get("human_fleiss_kappa")
+        crows = [(c["indicator"], _ind_ceiling(c)) for c in ceiling if _ind_ceiling(c) is not None]
+        if crows:
+            worst = [i for i, v in sorted(crows, key=lambda x: x[1])[:3]]
+            best = [i for i, v in sorted(crows, key=lambda x: -x[1])[:3]]
+            rows_d = [Row(ind, v, color="var(--critical)" if v < 0.05 else "var(--warning)",
+                          display=f"{v:.2f}") for ind, v in crows]
+            chart_d = BarChart(rows_d, vmin=min(-0.1, min(v for _, v in crows) - 0.05),
+                               vmax=max(0.4, max(v for _, v in crows) + 0.05), decimals=2, diverging=True,
+                               refs=[Ref(0.0, "chance", "var(--muted)")],
+                               label_w=70, chart_w=520, bar_h=15, gap=6)
+            view["charts"].append({
+                "title": "Where coaches agree least — coach-vs-coach agreement by indicator",
+                "svg": chart_d.svg(),
+                "caption": f"The rubric lines that need sharpening most: {', '.join(worst)} sit at or near chance. "
+                           f"Most consistent: {', '.join(best)}. Very skewed indicators (nearly all 'yes') can look "
+                           "artificially low here — see the skew column in the table below.",
+            })
+
+        # Table — swap-a-rater test
+        if exchange:
+            ex_rows = []
+            for e in exchange:
+                ci = e.get("delta_alpha_ci95") or [None, None]
+                ci_txt = f"[{ci[0]:+.2f}, {ci[1]:+.2f}]" if ci[0] is not None else "—"
+                verdict = ("passes — indistinguishable from a coach" if e.get("exchangeable")
+                           else "fails — pulls group consistency down")
+                ex_rows.append([e["model"], f"{e['n_recordings']}",
+                                f"{e['alpha_humans_only']:.2f}", f"{e['alpha_humans_plus_ai']:.2f}",
+                                f"{e['delta_alpha']:+.3f}", ci_txt, verdict])
+            view["tables"].append({
+                "title": "Swap-a-rater test — does adding the AI as a 4th rater hurt consistency?",
+                "columns": ["Model", "Lessons", "Coaches only", "With AI added", "Change", "Plausible range", "Verdict"],
+                "rows": ex_rows,
+                "note": "If the plausible range for the change includes 0, the AI is statistically "
+                        "indistinguishable from a randomly chosen coach. Only models with enough scored lessons appear.",
+            })
+
+        # Table — model rollup (both comparisons side by side)
+        roll_rows = []
+        for m in rollup:
+            pd_ = pooled.get(m["model"], {})
+            pk = pd_.get("weighted_kappa")
+            pct = pd_.get("pct_of_human_ceiling")
+            roll_rows.append([
+                m["model"], f"{m['ai_scored_recordings']}",
+                "low" if m["low_coverage"] else "full",
+                f"{pk:.3f}" if pk is not None else "—",
+                f"{pct * 100:.0f}%" if pct is not None else "—",
+                f"{m['median_weighted_kappa']:.3f}",
+                f"{m['indicators_meeting_070']}", f"{m['mean_ai_minus_human']:+.3f}",
+            ])
         view["tables"].append({
-            "title": "Per-model rollup",
-            "columns": ["Model", "AI recs", "Coverage", "Indicators", "Median wκ", "Median κ", "≥0.70", "Mean AI−human"],
-            "rows": [[m["model"], f"{m['ai_scored_recordings']}",
-                      "low" if m["low_coverage"] else "full", f"{m['n_indicators']}",
-                      f"{m['median_weighted_kappa']:.3f}", f"{m['median_kappa']:.3f}",
-                      f"{m['indicators_meeting_070']}", f"{m['mean_ai_minus_human']:+.3f}"]
-                     for m in rollup],
-            "note": "Weighted κ = quadratic-weighted Cohen's kappa, human consensus vs model, median across indicators.",
+            "title": "Per-model summary",
+            "columns": ["Model", "Lessons", "Data", "Vs individual coaches", "% of ceiling",
+                        "Vs combined answer (median)", "≥0.70", "AI − human"],
+            "rows": roll_rows,
+            "note": "All agreement scores use half-credit (linear) weighting on the yes/partial/no scale. "
+                    "'Vs individual coaches' is the honest comparison; 'vs combined answer' is always higher "
+                    "because combining smooths out coach disagreement.",
         })
 
-        # Table — per-indicator ceiling + each model's weighted kappa
+        # Table — per-indicator: coach agreement, skew, and each model
         by_model = self._load_human_vs_ai()
-        models = [m["model"] for m in rollup]
-        cols = ["Indicator", "Human Fleiss κ", "Human exact"] + [m.split("/")[-1] + " wκ" for m in models]
+        models = [m["model"] for m in rollup if not m["low_coverage"]]
+        cols = ["Indicator", "Coach vs coach", "% 'yes'"] + [m.split("/")[-1] for m in models]
         prows = []
         for c in ceiling:
             ind = c["indicator"]
-            row = [ind, f"{c['human_fleiss_kappa']:.3f}", f"{c['human_pairwise_exact']:.2f}"]
+            cv = _ind_ceiling(c)
+            prev_yes = c.get("prev_yes")
+            row = [ind,
+                   f"{cv:.2f}" if cv is not None else "—",
+                   f"{prev_yes * 100:.0f}%" if prev_yes is not None else "—"]
             for m in models:
                 wk = by_model.get((m, ind))
                 row.append(f"{wk:.3f}" if wk is not None else "—")
             prows.append(row)
         view["tables"].append({
-            "title": "Per-indicator: human ceiling vs each model (weighted κ)",
+            "title": "Per-indicator: coach agreement, score skew, and each model",
             "columns": cols,
             "rows": prows,
-            "note": "Read a model's number against the Human Fleiss κ in the same row — not against 0.70.",
+            "note": "Read a model's number against the coach-vs-coach number in the same row — not against 0.70. "
+                    "Where % 'yes' is very high, low agreement scores are partly an artefact of skew "
+                    "(nearly everyone says 'yes', so chance-adjusted scores collapse).",
         })
 
         # Table — cross-LLM pairs
         view["tables"].append({
-            "title": "Cross-LLM agreement (models scoring the same recordings)",
-            "columns": ["Model A", "Model B", "n", "κ", "Weighted κ", "Exact"],
-            "rows": [[p["model_a"], p["model_b"], f"{p['n']:,}", f"{p['kappa']:.3f}",
-                      f"{p['weighted_kappa']:.3f}", f"{p['exact_agreement']:.3f}"]
+            "title": "Do the AI models agree with each other? (same lessons)",
+            "columns": ["Model A", "Model B", "n", "Exact match", "Weighted agreement"],
+            "rows": [[p["model_a"], p["model_b"], f"{p['n']:,}",
+                      f"{p['exact_agreement']:.3f}", f"{p['weighted_kappa']:.3f}"]
                      for p in cross.get("pairs", [])],
-            "note": f"Median pairwise weighted κ = {cross.get('median_pairwise_weighted_kappa')} — models agree with each other more than with humans, consistent with a shared LLM harshness bias.",
+            "note": "Models agree with each other more than any of them agrees with coaches — "
+                    "consistent with a shared harshness bias in how AI reads the rubric.",
         })
 
     def _load_human_vs_ai(self) -> dict:

@@ -594,7 +594,7 @@
         "prev_no": 0.262,
         "prev_partial": 0.277,
         "prev_yes": 0.462,
-        "human_pairwise_kappa": NaN
+        "human_pairwise_kappa": null
       },
       {
         "indicator": "S2",
@@ -607,7 +607,7 @@
         "prev_no": 0.308,
         "prev_partial": 0.338,
         "prev_yes": 0.354,
-        "human_pairwise_kappa": NaN
+        "human_pairwise_kappa": null
       }
     ],
     "interpretation": "All weighted kappas are LINEAR with categories pinned to no/partial/yes (runbook Step 2); quadratic is kept as an explicit secondary column only. Judge DC against the human ceiling, not the absolute 0.70 bar — in kappa units use human_ceiling_pairwise_kappa (same estimator and weights as the DC numbers; pct_of_human_ceiling in dc_vs_each_coach_pooled_by_model is the like-for-like headline). Alpha is kept for what kappa cannot do: human_ceiling_pooled uses the full 3-rater structure with a clustered bootstrap CI, and exchangeability_delta_alpha is the single cleanest verdict — if adding DC as a 4th rater does not drop alpha (CI includes 0), DC is statistically exchangeable with a coach. Where Fleiss/alpha look near-zero but gwet_ac2 is much higher, the indicator has skewed prevalence (kappa paradox) — read prev_* columns before concluding raters disagree. Consensus-based kappa (human_vs_ai) is inflated relative to dc_vs_each_coach; report both.",
