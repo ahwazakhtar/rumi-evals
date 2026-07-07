@@ -5,8 +5,8 @@
 <h1>Rumi evaluation roadmap</h1>
 <p class="lede">The 8-step Rumi Evaluation Measurement Framework, all within <strong>Stage&nbsp;1
 (&ldquo;Develop the solution&rdquo;)</strong> of the EdTech Quality Cycle. Each card shows the
-framework&rsquo;s own pass/fail criterion against the real warehouse and study data. Click any
-step for the numbers, charts and what unblocks it.</p>
+framework&rsquo;s own pass/fail criterion against real programme data and the paired scoring study.
+Click any step for the numbers, charts and what it needs next.</p>
 
 <div class="summary-row" style="margin:16px 0 4px;">
   <span class="pill"><span class="dot pass"></span>{{ r.counts.pass }} pass</span>
@@ -16,8 +16,8 @@ step for the numbers, charts and what unblocks it.</p>
 </div>
 <p class="src-note">
   Source: {{ r.source_label }}.
-  {% if r.live_3a %}Step&nbsp;3a is refreshed <strong>live from the study Postgres</strong>.
-  {% else %}Step&nbsp;3a live refresh unavailable — showing cached study results.{% endif %}
+  {% if r.live_3a %}Step&nbsp;3a is refreshed <strong>live from the scoring study</strong>.
+  {% else %}Step&nbsp;3a live refresh unavailable — showing saved study results.{% endif %}
 </p>
 
 <div class="banner headline">

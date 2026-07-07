@@ -13,12 +13,12 @@
 {% if v.is_3a %}
 <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:8px 0 4px;">
   {% if v.live_3a %}
-    <span class="live-tag live"><span class="dot"></span>Live from study Postgres</span>
+    <span class="live-tag live"><span class="dot"></span>Live from the scoring study</span>
   {% else %}
-    <span class="live-tag cached"><span class="dot"></span>Cached study results</span>
+    <span class="live-tag cached"><span class="dot"></span>Saved study results</span>
   {% endif %}
   <form class="refresh-form" method="post" action="/step/3a/refresh">
-    <button class="btn ghost" type="submit">↻ Refresh from study DB</button>
+    <button class="btn ghost" type="submit">↻ Refresh from the study</button>
   </form>
 </div>
 {% if v.live_3a_error %}<p class="src-note">{{ v.live_3a_error }}</p>{% endif %}
@@ -37,7 +37,7 @@
     </div>
   </div>
   <div class="def" style="margin-top:14px;">
-    <h4>Reads from</h4>
+    <h4>Data source</h4>
     <p>{{ v.meta.reads }}</p>
   </div>
 </div>
