@@ -61,6 +61,18 @@
 </div>
 {% endif %}
 
+{% if v.glossary %}
+<details class="glossary">
+  <summary>Reading the statistics</summary>
+  <dl>
+    {% for g in v.glossary %}
+    <dt>{{ g.term }}</dt>
+    <dd>{{ g.gloss }}</dd>
+    {% endfor %}
+  </dl>
+</details>
+{% endif %}
+
 {% for c in v.charts %}
 <div class="chart">
   <h3>{{ c.title }}</h3>

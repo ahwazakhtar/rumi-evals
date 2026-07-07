@@ -288,3 +288,19 @@ td:first-child, th:first-child { font-variant-numeric: normal; }
 .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .tag { font-size: 12px; padding: 3px 9px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-secondary); }
 .tag:hover { color: var(--text-primary); text-decoration: none; }
+
+/* Statistics glossary (collapsible, sits under the stat tiles) */
+.glossary {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface-1); margin: 14px 0 4px; padding: 0 16px;
+}
+.glossary summary {
+  cursor: pointer; padding: 12px 0; font-size: 14px; font-weight: 600;
+  color: var(--text-secondary); list-style: none;
+}
+.glossary summary::-webkit-details-marker { display: none; }
+.glossary summary::before { content: "› "; display: inline-block; transition: transform .15s; }
+.glossary[open] summary::before { transform: rotate(90deg); }
+.glossary dl { margin: 0 0 14px; padding: 0; }
+.glossary dt { font-weight: 600; font-size: 13.5px; margin-top: 10px; }
+.glossary dd { margin: 2px 0 0; color: var(--text-secondary); font-size: 13.5px; line-height: 1.5; }

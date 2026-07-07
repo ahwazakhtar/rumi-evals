@@ -199,6 +199,29 @@ DATA_SOURCES = [
 STATUS_ORDER = {"pass": 0, "partial": 1, "fail": 2, "blocked": 3}
 STATUS_LABEL = {"pass": "PASS", "partial": "PARTIAL", "fail": "FAIL", "blocked": "BLOCKED"}
 
+# ---------------------------------------------------------------------------
+# Plain-language glosses for the statistical terms on each step, so a
+# non-specialist reader can interpret the numbers without dropping them.
+# ---------------------------------------------------------------------------
+GLOSSARY: dict[str, list[dict]] = {
+    "3a": [
+        {"term": "Kappa (κ)", "gloss": "Agreement adjusted for chance — 0 means no better than random guessing, 1 means perfect. The framework's target is above 0.70; below about 0.2 is very weak."},
+        {"term": "Weighted kappa (wκ)", "gloss": "The same 0–1 agreement measure, but it gives partial credit when two scores are close (e.g. “yes” vs “partial”) rather than counting every mismatch as total disagreement."},
+        {"term": "Human ceiling (Fleiss κ)", "gloss": "Kappa measured among the coaches themselves — how consistently different coaches score the same lesson. It caps how high any AI's agreement can realistically go."},
+        {"term": "Exact / adjacent agreement", "gloss": "The share of scores that match exactly, or are at most one category apart (e.g. “yes” vs “partial”)."},
+        {"term": "AI − human", "gloss": "The average gap between the AI's score and the coaches' on the 3-point scale. Negative means the AI scores harsher; −1 is roughly a full category lower."},
+    ],
+    "5": [
+        {"term": "Scoring drift", "gloss": "A gradual shift in the AI's own scoring over time that isn't explained by a change to the rubric — worth watching, but not by itself evidence that teaching changed."},
+    ],
+    "6": [
+        {"term": "Effect size (SD)", "gloss": "Improvement expressed in standard deviations. As a rough guide, about 0.2 is small, 0.5 moderate, and 0.8 large."},
+        {"term": "95% confidence interval", "gloss": "The plausible range for the true improvement. If the range stays above zero, the improvement is statistically reliable."},
+        {"term": "p-value", "gloss": "How likely the result is a fluke of chance — below 0.05 means unlikely, i.e. statistically significant."},
+        {"term": "Within-teacher trend", "gloss": "Each teacher compared against their own earlier lessons, then averaged across teachers — so it measures change, not differences between teachers."},
+    ],
+}
+
 
 # ---------------------------------------------------------------------------
 # Status + headline derivation (per step, from the result dict).
@@ -367,6 +390,7 @@ class EvalService:
             # Prefer the curated, plain-language caveats; the raw pipeline caveats
             # reference internal record/table names and aren't for an external reader.
             "caveats": meta.get("caveats", []),
+            "glossary": GLOSSARY.get(step_id, []),
             "interpretation": None,
             "source_label": self._source_label,
             "is_3a": step_id == "3a",
