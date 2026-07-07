@@ -56,6 +56,17 @@ def write_scorecard(all_results: dict) -> Path:
     RESULTS_DIR.mkdir(exist_ok=True)
     out = RESULTS_DIR / f"scorecard_{date.today().isoformat()}.md"
     out.write_text("\n".join(lines), encoding="utf-8")
-    with open(RESULTS_DIR / "latest.json", "w", encoding="utf-8") as f:
-        json.dump(all_results, f, ensure_ascii=False, indent=2, default=str)
+    # Merge into the existing latest.json so a partial run (e.g. --steps 3a)
+    # refreshes only the steps it ran instead of wiping the others.
+    latest_path = RESULTS_DIR / "latest.json"
+    merged = {}
+    if latest_path.exists():
+        try:
+            with open(latest_path, encoding="utf-8") as f:
+                merged = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            merged = {}
+    merged.update(all_results)
+    with open(latest_path, "w", encoding="utf-8") as f:
+        json.dump(merged, f, ensure_ascii=False, indent=2, default=str)
     return out

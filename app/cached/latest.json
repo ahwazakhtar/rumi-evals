@@ -95,45 +95,210 @@
   "step3a": {
     "step": "3a_human_irr",
     "status": "ok",
-    "n_recordings_in_study": 102,
+    "n_recordings_in_study": 100,
     "n_models_scored": 3,
     "n_models_full_coverage": 3,
-    "human_ceiling_median_fleiss": 0.068,
-    "human_ceiling_median_pairwise_exact": 0.439,
-    "criterion": "weighted kappa >= 0.7 per indicator (0.75 mature)",
+    "human_ceiling_median_fleiss": 0.069,
+    "human_ceiling_median_alpha_ordinal": 0.142,
+    "human_ceiling_median_gwet_ac2": 0.343,
+    "human_ceiling_median_pairwise_exact": 0.44,
+    "human_ceiling_pooled": {
+      "alpha_ordinal": 0.181,
+      "alpha_ci95": [
+        0.096,
+        0.269
+      ],
+      "gwet_ac2_ordinal": 0.411,
+      "n_recordings": 47,
+      "n_units": 747
+    },
+    "human_ceiling_pairwise_kappa": {
+      "note": "Runbook Step 3: all coach-coach pairs pooled through the same linear-weighted kappa as the DC comparisons — the unit-identical ceiling.",
+      "weighted_kappa": 0.166,
+      "kappa_ci95": [
+        0.097,
+        0.241
+      ],
+      "n_pairs_symmetrized": 2782,
+      "n_recordings": 47
+    },
+    "dc_vs_each_coach_pooled_by_model": {
+      "note": "Runbook headline: all DC-coach pairs pooled, linear-weighted kappa, with pct_of_human_ceiling vs human_ceiling_pairwise_kappa.",
+      "by_model": {
+        "deepseek-ai/deepseek-v4-pro": {
+          "n_pairs": 1221,
+          "weighted_kappa": 0.095,
+          "low_coverage": false,
+          "pct_of_human_ceiling": 0.572
+        },
+        "gpt-5.1": {
+          "n_pairs": 4675,
+          "weighted_kappa": 0.128,
+          "low_coverage": false,
+          "pct_of_human_ceiling": 0.771
+        },
+        "minimaxai/minimax-m2.7": {
+          "n_pairs": 3845,
+          "weighted_kappa": 0.169,
+          "low_coverage": false,
+          "pct_of_human_ceiling": 1.018
+        },
+        "mistralai/mistral-large-3-675b-instruct-2512": {
+          "n_pairs": 163,
+          "weighted_kappa": 0.027,
+          "low_coverage": true,
+          "pct_of_human_ceiling": 0.163
+        },
+        "moonshotai/kimi-k2.6": {
+          "n_pairs": 295,
+          "weighted_kappa": 0.064,
+          "low_coverage": true,
+          "pct_of_human_ceiling": 0.386
+        },
+        "nvidia/nemotron-3-ultra-550b-a55b": {
+          "n_pairs": 34,
+          "weighted_kappa": 0.216,
+          "low_coverage": true,
+          "pct_of_human_ceiling": 1.301
+        }
+      }
+    },
+    "exchangeability_delta_alpha": {
+      "note": "alpha(3 coaches + DC as 4th rater) - alpha(3 coaches). delta ~ 0 => DC is statistically exchangeable with a human coach. CI: cluster bootstrap over recordings.",
+      "by_model": [
+        {
+          "model": "minimaxai/minimax-m2.7",
+          "n_recordings": 44,
+          "alpha_humans_only": 0.171,
+          "alpha_humans_plus_ai": 0.158,
+          "delta_alpha": -0.013,
+          "delta_alpha_ci95": [
+            -0.063,
+            0.045
+          ],
+          "exchangeable": true
+        },
+        {
+          "model": "gpt-5.1",
+          "n_recordings": 47,
+          "alpha_humans_only": 0.181,
+          "alpha_humans_plus_ai": 0.149,
+          "delta_alpha": -0.032,
+          "delta_alpha_ci95": [
+            -0.091,
+            0.027
+          ],
+          "exchangeable": true
+        },
+        {
+          "model": "deepseek-ai/deepseek-v4-pro",
+          "n_recordings": 35,
+          "alpha_humans_only": 0.19,
+          "alpha_humans_plus_ai": 0.087,
+          "delta_alpha": -0.103,
+          "delta_alpha_ci95": [
+            -0.165,
+            -0.035
+          ],
+          "exchangeable": false
+        }
+      ]
+    },
+    "na_applicability_agreement": {
+      "note": "Agreement on WHETHER an indicator applies (scored vs na). All other stats treat na as missing — this is the na-decision agreement itself.",
+      "human_na_rate": 0.0313,
+      "human_alpha_binary": 0.253,
+      "dc_vs_consensus_by_model": [
+        {
+          "model": "gpt-5.1",
+          "n": 1650,
+          "human_na_rate": 0.0048,
+          "ai_na_rate": 0.0176,
+          "kappa_binary": 0.21,
+          "raw_agreement": 0.982
+        },
+        {
+          "model": "minimaxai/minimax-m2.7",
+          "n": 1569,
+          "human_na_rate": 0.0089,
+          "ai_na_rate": 0.0255,
+          "kappa_binary": 0.137,
+          "raw_agreement": 0.971
+        },
+        {
+          "model": "deepseek-ai/deepseek-v4-pro",
+          "n": 903,
+          "human_na_rate": 0.0111,
+          "ai_na_rate": 0.0144,
+          "kappa_binary": 0.163,
+          "raw_agreement": 0.979
+        },
+        {
+          "model": "moonshotai/kimi-k2.6",
+          "n": 215,
+          "human_na_rate": 0.0,
+          "ai_na_rate": 0.0,
+          "kappa_binary": null,
+          "raw_agreement": 1.0
+        },
+        {
+          "model": "mistralai/mistral-large-3-675b-instruct-2512",
+          "n": 99,
+          "human_na_rate": 0.0,
+          "ai_na_rate": 0.0,
+          "kappa_binary": null,
+          "raw_agreement": 1.0
+        },
+        {
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "n": 17,
+          "human_na_rate": 0.0,
+          "ai_na_rate": 0.0,
+          "kappa_binary": null,
+          "raw_agreement": 1.0
+        }
+      ]
+    },
+    "dc_vs_each_coach_median_by_model": {
+      "deepseek-ai/deepseek-v4-pro": 0.009,
+      "gpt-5.1": 0.113,
+      "minimaxai/minimax-m2.7": 0.071,
+      "moonshotai/kimi-k2.6": 0.006
+    },
+    "criterion": "LINEAR-weighted kappa >= 0.7 per indicator (0.75 mature); weights per runbook — adjacent miss 0.5, extreme miss 1.0, categories pinned to the full no/partial/yes scale",
     "best_model": "gpt-5.1",
-    "best_model_median_weighted_kappa": 0.195,
+    "best_model_median_weighted_kappa": 0.123,
     "any_model_meets_bar_overall": false,
     "model_rollup": [
       {
         "model": "gpt-5.1",
-        "ai_scored_recordings": 101,
-        "low_coverage": false,
-        "n_indicators": 21,
-        "median_weighted_kappa": 0.195,
-        "median_kappa": 0.082,
-        "indicators_meeting_070": 0,
-        "mean_ai_minus_human": -0.241
-      },
-      {
-        "model": "minimaxai/minimax-m2.7",
         "ai_scored_recordings": 100,
         "low_coverage": false,
         "n_indicators": 21,
-        "median_weighted_kappa": 0.087,
-        "median_kappa": 0.054,
+        "median_weighted_kappa": 0.123,
+        "median_kappa": 0.12,
         "indicators_meeting_070": 0,
-        "mean_ai_minus_human": -0.539
+        "mean_ai_minus_human": -0.217
+      },
+      {
+        "model": "minimaxai/minimax-m2.7",
+        "ai_scored_recordings": 97,
+        "low_coverage": false,
+        "n_indicators": 21,
+        "median_weighted_kappa": 0.085,
+        "median_kappa": 0.058,
+        "indicators_meeting_070": 0,
+        "mean_ai_minus_human": -0.533
       },
       {
         "model": "deepseek-ai/deepseek-v4-pro",
-        "ai_scored_recordings": 75,
+        "ai_scored_recordings": 72,
         "low_coverage": false,
-        "n_indicators": 20,
-        "median_weighted_kappa": 0.046,
-        "median_kappa": 0.026,
+        "n_indicators": 18,
+        "median_weighted_kappa": 0.034,
+        "median_kappa": 0.029,
         "indicators_meeting_070": 0,
-        "mean_ai_minus_human": -0.833
+        "mean_ai_minus_human": -0.81
       }
     ],
     "cross_llm_agreement": {
@@ -142,166 +307,313 @@
         "gpt-5.1",
         "minimaxai/minimax-m2.7"
       ],
-      "median_pairwise_weighted_kappa": 0.328,
+      "median_pairwise_weighted_kappa": 0.327,
       "pairs": [
         {
           "model_a": "deepseek-ai/deepseek-v4-pro",
           "model_b": "gpt-5.1",
-          "n": 1208,
-          "kappa": 0.193,
-          "weighted_kappa": 0.322,
-          "exact_agreement": 0.433
+          "n": 1161,
+          "kappa": 0.185,
+          "weighted_kappa": 0.315,
+          "exact_agreement": 0.424
         },
         {
           "model_a": "deepseek-ai/deepseek-v4-pro",
           "model_b": "minimaxai/minimax-m2.7",
-          "n": 1194,
-          "kappa": 0.215,
-          "weighted_kappa": 0.328,
-          "exact_agreement": 0.466
+          "n": 1148,
+          "kappa": 0.217,
+          "weighted_kappa": 0.327,
+          "exact_agreement": 0.468
         },
         {
           "model_a": "gpt-5.1",
           "model_b": "minimaxai/minimax-m2.7",
-          "n": 1592,
-          "kappa": 0.251,
-          "weighted_kappa": 0.411,
-          "exact_agreement": 0.497
+          "n": 1546,
+          "kappa": 0.249,
+          "weighted_kappa": 0.408,
+          "exact_agreement": 0.495
         }
       ]
     },
     "human_ceiling_per_indicator": [
       {
         "indicator": "SI1",
-        "n_recordings": 93,
-        "human_fleiss_kappa": 0.064,
-        "human_pairwise_exact": 0.53
+        "section": "B",
+        "n_recordings": 100,
+        "human_fleiss_kappa": 0.026,
+        "human_alpha_ordinal": 0.038,
+        "human_gwet_ac2_ordinal": 0.615,
+        "human_pairwise_exact": 0.523,
+        "prev_no": 0.07,
+        "prev_partial": 0.236,
+        "prev_yes": 0.694,
+        "human_pairwise_kappa": -0.077
       },
       {
         "indicator": "SI2",
-        "n_recordings": 93,
-        "human_fleiss_kappa": 0.165,
-        "human_pairwise_exact": 0.487
+        "section": "B",
+        "n_recordings": 100,
+        "human_fleiss_kappa": 0.141,
+        "human_alpha_ordinal": 0.142,
+        "human_gwet_ac2_ordinal": 0.478,
+        "human_pairwise_exact": 0.483,
+        "prev_no": 0.112,
+        "prev_partial": 0.357,
+        "prev_yes": 0.531,
+        "human_pairwise_kappa": 0.058
       },
       {
         "indicator": "SI3",
-        "n_recordings": 93,
-        "human_fleiss_kappa": -0.007,
-        "human_pairwise_exact": 0.742
+        "section": "B",
+        "n_recordings": 100,
+        "human_fleiss_kappa": -0.024,
+        "human_alpha_ordinal": -0.088,
+        "human_gwet_ac2_ordinal": 0.829,
+        "human_pairwise_exact": 0.72,
+        "prev_no": 0.027,
+        "prev_partial": 0.124,
+        "prev_yes": 0.849,
+        "human_pairwise_kappa": -0.128
       },
       {
         "indicator": "MA-0",
-        "n_recordings": 93,
-        "human_fleiss_kappa": 0.107,
-        "human_pairwise_exact": 0.43
+        "section": "B",
+        "n_recordings": 100,
+        "human_fleiss_kappa": 0.121,
+        "human_alpha_ordinal": 0.254,
+        "human_gwet_ac2_ordinal": 0.398,
+        "human_pairwise_exact": 0.44,
+        "prev_no": 0.182,
+        "prev_partial": 0.434,
+        "prev_yes": 0.384,
+        "human_pairwise_kappa": 0.121
       },
       {
         "indicator": "PIA-1",
-        "n_recordings": 93,
-        "human_fleiss_kappa": 0.133,
-        "human_pairwise_exact": 0.484
+        "section": "B",
+        "n_recordings": 100,
+        "human_fleiss_kappa": 0.118,
+        "human_alpha_ordinal": 0.195,
+        "human_gwet_ac2_ordinal": 0.304,
+        "human_pairwise_exact": 0.483,
+        "prev_no": 0.24,
+        "prev_partial": 0.186,
+        "prev_yes": 0.574,
+        "human_pairwise_kappa": 0.012
       },
       {
         "indicator": "PIA-2",
-        "n_recordings": 93,
-        "human_fleiss_kappa": 0.16,
-        "human_pairwise_exact": 0.609
+        "section": "B",
+        "n_recordings": 100,
+        "human_fleiss_kappa": 0.132,
+        "human_alpha_ordinal": 0.229,
+        "human_gwet_ac2_ordinal": 0.624,
+        "human_pairwise_exact": 0.6,
+        "prev_no": 0.124,
+        "prev_partial": 0.205,
+        "prev_yes": 0.671,
+        "human_pairwise_kappa": 0.3
       },
       {
         "indicator": "PIA-3",
-        "n_recordings": 93,
-        "human_fleiss_kappa": 0.01,
-        "human_pairwise_exact": 0.419
+        "section": "B",
+        "n_recordings": 100,
+        "human_fleiss_kappa": 0.021,
+        "human_alpha_ordinal": 0.045,
+        "human_gwet_ac2_ordinal": 0.217,
+        "human_pairwise_exact": 0.413,
+        "prev_no": 0.492,
+        "prev_partial": 0.318,
+        "prev_yes": 0.19,
+        "human_pairwise_kappa": -0.007
       },
       {
         "indicator": "PIA-4",
-        "n_recordings": 93,
-        "human_fleiss_kappa": -0.001,
-        "human_pairwise_exact": 0.423
+        "section": "B",
+        "n_recordings": 100,
+        "human_fleiss_kappa": 0.01,
+        "human_alpha_ordinal": 0.183,
+        "human_gwet_ac2_ordinal": 0.321,
+        "human_pairwise_exact": 0.42,
+        "prev_no": 0.209,
+        "prev_partial": 0.337,
+        "prev_yes": 0.453,
+        "human_pairwise_kappa": 0.117
       },
       {
         "indicator": "PIA-5",
-        "n_recordings": 93,
-        "human_fleiss_kappa": 0.029,
-        "human_pairwise_exact": 0.376
+        "section": "B",
+        "n_recordings": 100,
+        "human_fleiss_kappa": 0.008,
+        "human_alpha_ordinal": 0.124,
+        "human_gwet_ac2_ordinal": 0.256,
+        "human_pairwise_exact": 0.37,
+        "prev_no": 0.24,
+        "prev_partial": 0.419,
+        "prev_yes": 0.341,
+        "human_pairwise_kappa": 0.102
       },
       {
         "indicator": "PIC-1",
-        "n_recordings": 93,
-        "human_fleiss_kappa": 0.138,
-        "human_pairwise_exact": 0.473
+        "section": "B",
+        "n_recordings": 100,
+        "human_fleiss_kappa": 0.119,
+        "human_alpha_ordinal": 0.139,
+        "human_gwet_ac2_ordinal": 0.491,
+        "human_pairwise_exact": 0.47,
+        "prev_no": 0.105,
+        "prev_partial": 0.318,
+        "prev_yes": 0.578,
+        "human_pairwise_kappa": 0.18
       },
       {
         "indicator": "PIC-2",
-        "n_recordings": 93,
-        "human_fleiss_kappa": 0.1,
-        "human_pairwise_exact": 0.642
+        "section": "B",
+        "n_recordings": 100,
+        "human_fleiss_kappa": 0.085,
+        "human_alpha_ordinal": 0.04,
+        "human_gwet_ac2_ordinal": 0.785,
+        "human_pairwise_exact": 0.643,
+        "prev_no": 0.035,
+        "prev_partial": 0.186,
+        "prev_yes": 0.779,
+        "human_pairwise_kappa": -0.009
       },
       {
         "indicator": "PIC-3",
-        "n_recordings": 93,
-        "human_fleiss_kappa": 0.095,
-        "human_pairwise_exact": 0.455
+        "section": "B",
+        "n_recordings": 100,
+        "human_fleiss_kappa": 0.069,
+        "human_alpha_ordinal": 0.112,
+        "human_gwet_ac2_ordinal": 0.43,
+        "human_pairwise_exact": 0.447,
+        "prev_no": 0.132,
+        "prev_partial": 0.368,
+        "prev_yes": 0.5,
+        "human_pairwise_kappa": 0.007
       },
       {
         "indicator": "PIC-4",
-        "n_recordings": 93,
-        "human_fleiss_kappa": 0.027,
-        "human_pairwise_exact": 0.405
+        "section": "B",
+        "n_recordings": 100,
+        "human_fleiss_kappa": 0.025,
+        "human_alpha_ordinal": 0.053,
+        "human_gwet_ac2_ordinal": 0.333,
+        "human_pairwise_exact": 0.407,
+        "prev_no": 0.163,
+        "prev_partial": 0.442,
+        "prev_yes": 0.395,
+        "human_pairwise_kappa": -0.037
       },
       {
         "indicator": "PIC-5",
-        "n_recordings": 93,
-        "human_fleiss_kappa": 0.053,
-        "human_pairwise_exact": 0.427
+        "section": "B",
+        "n_recordings": 100,
+        "human_fleiss_kappa": 0.064,
+        "human_alpha_ordinal": 0.146,
+        "human_gwet_ac2_ordinal": 0.392,
+        "human_pairwise_exact": 0.433,
+        "prev_no": 0.167,
+        "prev_partial": 0.461,
+        "prev_yes": 0.372,
+        "human_pairwise_kappa": 0.074
       },
       {
         "indicator": "L1",
-        "n_recordings": 18,
-        "human_fleiss_kappa": -0.064,
-        "human_pairwise_exact": 0.333
+        "section": "C",
+        "n_recordings": 20,
+        "human_fleiss_kappa": -0.089,
+        "human_alpha_ordinal": 0.078,
+        "human_gwet_ac2_ordinal": -0.033,
+        "human_pairwise_exact": 0.3,
+        "prev_no": 0.413,
+        "prev_partial": 0.217,
+        "prev_yes": 0.37,
+        "human_pairwise_kappa": -0.2
       },
       {
         "indicator": "L2",
-        "n_recordings": 33,
-        "human_fleiss_kappa": 0.081,
-        "human_pairwise_exact": 0.394
+        "section": "C",
+        "n_recordings": 36,
+        "human_fleiss_kappa": 0.117,
+        "human_alpha_ordinal": 0.197,
+        "human_gwet_ac2_ordinal": 0.309,
+        "human_pairwise_exact": 0.426,
+        "prev_no": 0.226,
+        "prev_partial": 0.405,
+        "prev_yes": 0.369,
+        "human_pairwise_kappa": 0.141
       },
       {
         "indicator": "L3",
-        "n_recordings": 35,
+        "section": "C",
+        "n_recordings": 38,
         "human_fleiss_kappa": 0.068,
-        "human_pairwise_exact": 0.39
+        "human_alpha_ordinal": 0.168,
+        "human_gwet_ac2_ordinal": 0.359,
+        "human_pairwise_exact": 0.421,
+        "prev_no": 0.193,
+        "prev_partial": 0.42,
+        "prev_yes": 0.386,
+        "human_pairwise_kappa": -0.043
       },
       {
         "indicator": "M1",
-        "n_recordings": 23,
-        "human_fleiss_kappa": 0.031,
-        "human_pairwise_exact": 0.464
+        "section": "C",
+        "n_recordings": 24,
+        "human_fleiss_kappa": 0.021,
+        "human_alpha_ordinal": 0.225,
+        "human_gwet_ac2_ordinal": 0.273,
+        "human_pairwise_exact": 0.458,
+        "prev_no": 0.371,
+        "prev_partial": 0.355,
+        "prev_yes": 0.274,
+        "human_pairwise_kappa": 0.187
       },
       {
         "indicator": "M2",
-        "n_recordings": 22,
-        "human_fleiss_kappa": 0.087,
-        "human_pairwise_exact": 0.379
+        "section": "C",
+        "n_recordings": 23,
+        "human_fleiss_kappa": 0.169,
+        "human_alpha_ordinal": 0.043,
+        "human_gwet_ac2_ordinal": 0.148,
+        "human_pairwise_exact": 0.406,
+        "prev_no": 0.367,
+        "prev_partial": 0.367,
+        "prev_yes": 0.267,
+        "human_pairwise_kappa": -0.072
       },
       {
         "indicator": "S1",
-        "n_recordings": 22,
-        "human_fleiss_kappa": 0.048,
-        "human_pairwise_exact": 0.439
+        "section": "C",
+        "n_recordings": 25,
+        "human_fleiss_kappa": 0.091,
+        "human_alpha_ordinal": 0.157,
+        "human_gwet_ac2_ordinal": 0.224,
+        "human_pairwise_exact": 0.44,
+        "prev_no": 0.262,
+        "prev_partial": 0.277,
+        "prev_yes": 0.462,
+        "human_pairwise_kappa": NaN
       },
       {
         "indicator": "S2",
-        "n_recordings": 22,
-        "human_fleiss_kappa": 0.327,
-        "human_pairwise_exact": 0.576
+        "section": "C",
+        "n_recordings": 25,
+        "human_fleiss_kappa": 0.23,
+        "human_alpha_ordinal": 0.332,
+        "human_gwet_ac2_ordinal": 0.343,
+        "human_pairwise_exact": 0.533,
+        "prev_no": 0.308,
+        "prev_partial": 0.338,
+        "prev_yes": 0.354,
+        "human_pairwise_kappa": NaN
       }
     ],
-    "interpretation": "The 0.70 kappa bar is measured against human consensus, but the human ceiling above shows coaches barely agree with each other — so the bar is currently unreachable by construction. Fix rater calibration / rubric clarity (raise the ceiling) before judging any model against 0.70. Separately, every model scores systematically harsher than humans (see directional bias).",
+    "interpretation": "All weighted kappas are LINEAR with categories pinned to no/partial/yes (runbook Step 2); quadratic is kept as an explicit secondary column only. Judge DC against the human ceiling, not the absolute 0.70 bar — in kappa units use human_ceiling_pairwise_kappa (same estimator and weights as the DC numbers; pct_of_human_ceiling in dc_vs_each_coach_pooled_by_model is the like-for-like headline). Alpha is kept for what kappa cannot do: human_ceiling_pooled uses the full 3-rater structure with a clustered bootstrap CI, and exchangeability_delta_alpha is the single cleanest verdict — if adding DC as a 4th rater does not drop alpha (CI includes 0), DC is statistically exchangeable with a coach. Where Fleiss/alpha look near-zero but gwet_ac2 is much higher, the indicator has skewed prevalence (kappa paradox) — read prev_* columns before concluding raters disagree. Consensus-based kappa (human_vs_ai) is inflated relative to dc_vs_each_coach; report both.",
     "key_finding_directional_bias": {
       "note": "Negative human_ceiling or large negative ai_minus_human means AI is harsher than human coaches. Inspect results/step3a_human_vs_ai.csv per indicator.",
-      "mean_ai_minus_human_all_models": -0.533
+      "mean_ai_minus_human_all_models": -0.505
     }
   },
   "step3b": {
